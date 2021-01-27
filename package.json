@@ -1,14 +1,16 @@
 {
-  "name": "express-blogpost-api-mysql",
+  "name": "p4backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "## Project Setup 1. Install dependencies: `npm install` 1. Create a new database for this project and configure DB options in `.env` and `config/config.json` files, refer to example config files 1. Run migrations: `sequelize db:migrate`",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "mysql2": "^2.2.5",
@@ -16,5 +18,13 @@
   },
   "devDependencies": {
     "sequelize-cli": "^6.2.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edwinlim/p4backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/edwinlim/p4backend/issues"
+  },
+  "homepage": "https://github.com/edwinlim/p4backend#readme"
 }
