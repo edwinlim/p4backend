@@ -1,4 +1,6 @@
+require('dotenv').config()
 const express = require('express')
+const mainController = require('./controllers/MainController')
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -6,11 +8,9 @@ app.use(express.urlencoded({
     extended: true
 }))
 
-app.get("/", (req, res) => {
-    res.json({ message: "Welcome to Express Sequalizer application." });
-  });
+app.get("/", mainController.start)
 
 
-app.listen(process.env.PORT || port, () => {
+app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
 })
