@@ -1,4 +1,5 @@
 'use strict';
+const RequestModel = require('./request')
 const {
   Model
 } = require('sequelize');

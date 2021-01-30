@@ -1,4 +1,6 @@
 'use strict';
+const DriverModel = require('./driver')
+
 const {
   Model
 } = require('sequelize');
