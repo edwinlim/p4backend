@@ -14,3 +14,5 @@ app.get("/", mainController.start)
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
 })
+
+app.get("/optimize", mainController.optimize)
