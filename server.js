@@ -9,6 +9,7 @@ app.use(express.urlencoded({
 }))
 
 app.get("/", mainController.start)
+app.post("/api/v1/newrequest", mainController.newRequestDelivery)
 
 
 app.listen(port, () => {
