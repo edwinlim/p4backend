@@ -1,10 +1,20 @@
+// npm modules
 const { response } = require('express')
+
+// importing the sequilize middleware
 const { Sequelize } = require('../models/index')
 const sequelize = require('../models/index')
+
+// models
 const Request = require('../models/request')
-const Tour = require("../models/tour")
 const RequestModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Tour = require("../models/tour")
 const TourModel = Tour(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Driver = require("../models/driver")
+const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+
+// common functions
+const utility = require("../helper/utility");
 
 const controllers = {
     start: (req, res) => {
@@ -40,7 +50,7 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
-        const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        const pickupCode = utility.generateOtp()
 
         // Create delivery data
         const requestDelivery = {
@@ -108,25 +118,172 @@ const controllers = {
     },
 
     generateOtp: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobId) {
+            res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
 
-        // make a function which will generate n number of otp 
-        // generate a 4 digit otp
+        TourModel.findOne({
+            where:
+                Sequelize.or(
+                    { request_id: params.jobId }
+                )
 
-        // then save it to database in tour_details table where request_id = req.body.jobId
+        })
+            .then(response => {
+                // validation to check whether the job id is valid or not
+                if (!response) {
+                    res.send(({
+                        status: 0,
+                        message: "No JOB ID found in DB"
+                    }))
+                }
+                const deliveryCode = utility.generateOtp()
+                console.log(deliveryCode)
+                //if job.Id is found in DB then below code will run if not, the above "if" code will run
+                // save the otp in db on the record request_id = req.body.jobId
+                response.update({
+                    dropoff_code: deliveryCode
+                }).then(() => {
+                    let dataToSend = {
+                        status: 1,
+                        message: "OTP Generated and Send to Customer"
+                    }
+                    //if the OTP is a normal OTP(you don't have to show it on the client end)
+                    if (params.showOTP) {
+                        dataToSend['otp'] = deliveryCode
+                    }
+                    //if we need to see the OTP on driver end, we pass a param showOTP: true
+                    res.send(dataToSend)
+                })
+                    .catch((err) => {
+                        res.send(({
+                            status: 0,
+                            message: err
+                        }))
+                    })
 
-        // TourModel.findAll({
-        //     where:
 
-        //         Sequelize.or(
-        //             { request_id: req.body.jobId }
-        //         )
+            })
 
-        // })
-        //     .then(response => {
-        //         response.forEach(x => {
-        //             console.log(x.tour_id)
-        //         })
-        //     })
+    },
+
+    validateOtp: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobId) {
+            res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
+        if (!params.otp) {
+            res.send(({
+                status: 0,
+                message: "No OTP found in Params"
+            }))
+        }
+
+        TourModel.findOne({
+            where:
+                Sequelize.and(
+                    { request_id: params.jobId },
+                    { dropoff_code: params.otp }
+                )
+
+        })
+            .then(response => {
+                // validation to check whether the job id is valid or not
+                if (!response) {
+                    res.send(({
+                        status: 0,
+                        message: "OTP Not Valid"
+                    }))
+                } else {
+                    /// Pending: write here the code to mark the job as completed
+                    res.send(({
+                        status: 1,
+                        message: "OTP is Valid"
+                    }))
+                }
+
+
+            })
+
+    },
+
+    availability: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.driverID) {
+            res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
+
+        if (params.availability === undefined || params.availability === null) {
+            res.send(({
+                status: 0,
+                message: "Availability Required in Params"
+            }))
+        }
+
+        DriverModel.findOne({
+            where:
+                Sequelize.or(
+                    { user_id: params.driverID }
+                )
+
+        })
+            .then(response => {
+                // validation to check whether the job id is valid or not
+                if (!response) {
+                    res.send(({
+                        status: 0,
+                        message: "No Driver found in DB"
+                    }))
+                }
+                response.update({
+                    availability: params.availability ? 1 : 0
+                }).then(() => {
+                    let dataToSend = {
+                        status: 1,
+                        message: "Driver Marked As " + params.availability
+                    }
+                    res.send(dataToSend)
+                })
+                    .catch((err) => {
+                        res.send(({
+                            status: 0,
+                            message: err
+                        }))
+                    })
+
+
+            })
 
     }
 

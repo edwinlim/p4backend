@@ -18,7 +18,11 @@ app.use(express.json())
 app.get("/", mainController.start)
 app.post("/api/v1/newrequest", mainController.newRequestDelivery)
 
-app.post("/driver", mainController.generateOtp)
+app.post("/api/v1/otpGenerator", mainController.generateOtp)
+
+app.post("/api/v1/otpValidtor", mainController.validateOtp)
+
+app.post("/api/v1/availability", mainController.availability)
 
 
 app.listen(port, () => {
