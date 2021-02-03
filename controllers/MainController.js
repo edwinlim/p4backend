@@ -4,6 +4,8 @@ const sequelize = require('../models/index')
 const Request = require('../models/request')
 const RequestModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const TourModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const User = require('../models/user')
+const UserModel = User(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
 const controllers = {
     start: (req, res) => {  
@@ -65,7 +67,7 @@ const controllers = {
         // Save data in the database
         RequestModel.create(requestDelivery)
             .then(data => {
-                res.send(data)
+                res.status(200).send(data)
             })
             .catch(err => {
                 res.status(500).send({
@@ -90,6 +92,23 @@ const controllers = {
         .then (response => {
             console.log(response)
         })
+
+        RequestModel.findAll({
+            where: { status: '1'},
+            include: [
+                {
+                    model: UserModel,
+                    // on: {
+                    //     id: Sequelize.literal("`RequestModel`.`sender_id` = `UserModel`.`id`") 
+                    // }
+                }
+            ]
+        })
+        .then(result => {
+            res.send(result)
+        })
+
+        
 
         // get the latitude and longtitude of the delivery requests of these statuses
 

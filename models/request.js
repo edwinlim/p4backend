@@ -1,7 +1,8 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const UserModel = require('./user')
+
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Request extends Model {
     /**
@@ -11,12 +12,14 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
         // define association here
-        Request.belongsTo(models.User, {
-          foreignKey: 'user_id',
-          onDelete: 'CASCADE'
-        })
+        Request.belongsTo(models.User)
+        //     , {
+        //   foreignKey: 'id',
+        //   onDelete: 'CASCADE'
+        // })
       }
   };
+
   Request.init(
     {
       request_id: {
@@ -116,6 +119,8 @@ module.exports = (sequelize, DataTypes) => {
       underscored: true,
     }
   );
+
+
 
   return Request;
 };
