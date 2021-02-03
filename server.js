@@ -16,6 +16,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json())
 
 app.get("/", mainController.start)
+app.post("/api/v1/newrequest", mainController.newRequestDelivery)
 
 app.post("/driver", mainController.generateOtp)
 
