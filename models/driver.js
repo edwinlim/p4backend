@@ -32,19 +32,19 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       plate_number: {
-        type:DataTypes.STRING(20),
+        type: DataTypes.STRING(20),
         allowNull: false,
       },
       vehicle_type: {
-        type:DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       remark: {
-        type:DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       availability: {
-        type:DataTypes.BOOLEAN,
+        type: DataTypes.BOOLEAN,
         allowNull: false,
       },
       created_at: {
@@ -57,8 +57,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-    }, 
-    
+    },
+
     {
       sequelize,
       modelName: 'Driver',
