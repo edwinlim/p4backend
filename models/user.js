@@ -1,24 +1,33 @@
 'use strict';
-const DriverModel = require('./driver')
+const driver = require('./driver')
+const request = require('./request')
 
 const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
     static associate(models) {
       // define association here
-      User.hasMany(models.Driver, {
-        foreignKey: 'user_id',
-        onDelete: 'CASCADE'
-      })
+      // User.hasMany(models.Driver)
+        // , {
+        // foreignKey: 'id',
+        // as: 'driver_details',
+        // onDelete: 'CASCADE'
+      // }
+      
+
+      User.hasMany(models.Request)
+      // , {
+      //   foreignKey: 'id',
+      //   as: 'users',
+      //   onDelete: 'CASCADE'
+      // })
     }
   };
+
+
   User.init(
     {
       id: {
@@ -32,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       email_address: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      pwsalt:{
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -72,26 +85,34 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 'Singapore',
       },
+      user_lat:{
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      user_long:{
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       contact: {
         type: DataTypes.STRING(20),
         allowNull: false,
       },
-      created_at: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
+      // created_at: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      //   defaultValue: DataTypes.NOW,
+      // },
+      // updated_at: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      //   defaultValue: DataTypes.NOW,
+      // },
     }, 
     {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users',
-    underscored: true
+      sequelize,
+      modelName: 'User',
+      tableName: 'users',
+      underscored: true
     }
   );
   return User;

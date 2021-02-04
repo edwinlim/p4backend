@@ -1,5 +1,5 @@
 'use strict';
-const UserModel = require('./user')
+
 
 const {
   Model
@@ -13,12 +13,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Driver.belongsTo(models.User, {
-        foreignKey: 'user_id',
-        onDelete: 'CASCADE'
-      })
+      Driver.belongsTo(models.User)
+      // , {
+      //   foreignKey: 'user_id',
+      //   onDelete: 'CASCADE'
+      // })
     }
   };
+
+  Driver.associate = function (models) {
+    Driver.belongsTo(models.User, {foreignKey: 'id'});
+  };
+
   Driver.init(
     {
       id: {
@@ -47,17 +53,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },
-      created_at: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-    },
+      // created_at: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      //   defaultValue: DataTypes.NOW,
+      // },
+      // updated_at: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      //   defaultValue: DataTypes.NOW,
+      // },
+    }, 
+    
 
     {
       sequelize,
