@@ -1,5 +1,6 @@
 // npm modules
 const _ = require("lodash")
+const kmeans = require('node-kmeans')
 
 // importing the sequilize middleware
 const { Sequelize } = require('../models/index')
@@ -89,6 +90,8 @@ const controllers = {
 
 
     optimize: (req, res) => {
+        let data = []
+
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
         RequestModel.findAll({
@@ -101,23 +104,54 @@ const controllers = {
 
         })
             .then(response => {
-                console.log(response)
+
+
+                for (i = 0; i < response.length; i++) {
+
+
+                    data[i] = {
+                        sender_id: response[i].sender_id,
+                        request_id: response[i].request_id,
+                        receiver_lat: response[i].receiver_lat,
+                        receiver_long: response[i].receiver_long
+                    }
+
+
+                }
+
+
+                let vectors = new Array();
+
+                for (let i = 0; i < data.length; i++) {
+                    vectors[i] = [data[i]['receiver_lat'], data[i]['receiver_long']];
+                }
+                //vectors is a list of lat/long
+
+
+                const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
+                    if (err) console.error(err);
+                    else //console.log('%o', result);
+                        return result
+                });
+
+
+
+
+                for (i = 0; i < result.groups.length; i++) {
+                    console.log(result.groups[i].clusterInd)
+                    //write another forloop to get the clusterInd indexes. 
+                    for (j = 0; j < result.groups[i].clusterInd.length; j++) {
+                        //console.log(result.groups[i].clusterInd[j])
+                        console.log(data[result.groups[i].clusterInd[j]])
+                    }
+
+                }
+
+
+                //think how to insert to tourID
+
             })
 
-        RequestModel.findAll({
-            where: { status: '1' },
-            include: [
-                {
-                    model: UserModel,
-                    // on: {
-                    //     id: Sequelize.literal("`RequestModel`.`sender_id` = `UserModel`.`id`") 
-                    // }
-                }
-            ]
-        })
-            .then(result => {
-                res.send(result)
-            })
 
 
 
@@ -133,8 +167,8 @@ const controllers = {
         // insert into tour table
 
 
-
     },
+
 
     generateOtp: (req, res) => {
         //Validations

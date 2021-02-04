@@ -6,6 +6,7 @@ const bodyParser = require('body-parser')
 const mainController = require('./controllers/MainController');
 const usersController = require('./controllers/UserController')
 const app = express();
+
 const port = process.env.PORT || 5000;
 
 app.use(express.urlencoded({
@@ -22,6 +23,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json())
 
+app.get("/optimize", mainController.optimize)
 
 app.get("/", mainController.start)
 // user registration
