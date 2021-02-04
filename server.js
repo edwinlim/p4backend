@@ -14,7 +14,7 @@ app.use(express.urlencoded({
 
 app.use(cors({
     origin: '*'
-  }))
+}))
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -36,6 +36,12 @@ app.post("/api/v1/otpValidtor", mainController.validateOtp)
 app.post("/api/v1/availability", mainController.availability)
 
 app.get("/optimize", mainController.optimize)
+
+app.post("/api/v1/getClusterName", mainController.getClusterName)
+
+app.post("/api/v1/getBlockName", mainController.getBlockName)
+
+app.post("/api/v1/getJobBasedOnBlock", mainController.getJobBasedOnBlock)
 
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
