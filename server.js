@@ -27,9 +27,11 @@ app.get("/optimize", mainController.optimize)
 
 app.get("/", mainController.start)
 // user registration
-app.post('/api/v1/users/register', usersController.register)
+app.post('/api/v1/user/login', usersController.login)
+app.post('/api/v1/user/register', usersController.register)
 
 app.post("/api/v1/newrequest", mainController.newRequestDelivery)
+app.get("/optimize", mainController.optimize)
 
 app.post("/api/v1/otpGenerator", mainController.generateOtp)
 

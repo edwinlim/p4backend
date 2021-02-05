@@ -1,6 +1,8 @@
+
 // npm modules
 const _ = require("lodash")
 const kmeans = require('node-kmeans')
+const { response } = require('express')
 
 // importing the sequilize middleware
 const { Sequelize } = require('../models/index')
@@ -20,24 +22,25 @@ const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const utility = require("../helper/utility");
 
 const controllers = {
-    start: (req, res) => {
+    
+    start: (req, res) => {  
         //to show DB is connected.
 
         RequestModel.findAll()
             .then(response => {
 
-
+                
                 return res.status(200).json(
                     {
                         success: true,
                         request: response
-
+                        
                     }
-
+                    
                 )
-
+                
             })
-
+      
 
     },
 
@@ -45,7 +48,7 @@ const controllers = {
         const formInputs = req.body.requestForm
 
         // Validate receiver information
-        if (!formInputs.receiverEmail || !formInputs.receiverPostcode) {
+        if (!formInputs.receiverEmail || !formInputs.receiverPostcode){
             res.status(400).send({
                 message: "Receiver information cannot be empty"
             })
@@ -53,7 +56,7 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
-        const pickupCode = utility.generateOtp()
+        const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
 
         // Create delivery data
         const requestDelivery = {
@@ -89,71 +92,65 @@ const controllers = {
     },
 
 
-    optimize: (req, res) => {
+    optimize: (req,res) => {
         let data = []
-
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
         RequestModel.findAll({
-            where:
-
-                Sequelize.or(
-                    { status: 1 },
-                    { status: 3 }
-                )
-
+            where: { status: 3 } 
         })
-            .then(response => {
+        .then (response => {
+            for (i = 0; i < response.length; i++) {
 
-
-                for (i = 0; i < response.length; i++) {
-
-
-                    data[i] = {
-                        sender_id: response[i].sender_id,
-                        request_id: response[i].request_id,
-                        receiver_lat: response[i].receiver_lat,
-                        receiver_long: response[i].receiver_long
-                    }
-
-
+                data[i] = {
+                    sender_id: response[i].sender_id,
+                    request_id: response[i].request_id,
+                    receiver_lat: response[i].receiver_lat,
+                    receiver_long: response[i].receiver_long
                 }
-
-
-                let vectors = new Array();
-
-                for (let i = 0; i < data.length; i++) {
-                    vectors[i] = [data[i]['receiver_lat'], data[i]['receiver_long']];
+            }
+            
+            RequestModel.findAll({
+                where: { status : 1 }
+            }).then (results => {
+                if(results.length > 0){
+                    UserModel.findAll({
+                        where:{
+                            id: result.map(x=>x['sender_id'])
+                        }
+                    }).then(pickuplist =>{
+                        res.send(pickuplist)
+                    })
                 }
-                //vectors is a list of lat/long
-
-
-                const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
-                    if (err) console.error(err);
-                    else //console.log('%o', result);
-                        return result
-                });
-
-
-
-
-                for (i = 0; i < result.groups.length; i++) {
-                    console.log(result.groups[i].clusterInd)
-                    //write another forloop to get the clusterInd indexes. 
-                    for (j = 0; j < result.groups[i].clusterInd.length; j++) {
-                        //console.log(result.groups[i].clusterInd[j])
-                        console.log(data[result.groups[i].clusterInd[j]])
-                    }
-
-                }
-
-
-                //think how to insert to tourID
-
             })
 
+            let vectors = new Array();
 
+            for (let i = 0; i < data.length; i++) {
+                vectors[i] = [data[i]['receiver_lat'], data[i]['receiver_long']];
+            }
 
+            //vectors is a list of lat/long
+
+            const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
+                if (err) console.error(err);
+                else //console.log('%o', result);
+                    return result
+            });
+
+            for (i = 0; i < result.groups.length; i++) {
+                console.log(result.groups[i].clusterInd)
+                //write another forloop to get the clusterInd indexes. 
+                for (j = 0; j < result.groups[i].clusterInd.length; j++) {
+                    //console.log(result.groups[i].clusterInd[j])
+                    // console.log(data[result.groups[i].clusterInd[j]])
+                }
+
+            }
+
+            //think how to insert to tourID
+
+        })
 
         // get the latitude and longtitude of the delivery requests of these statuses
 
@@ -166,9 +163,7 @@ const controllers = {
 
         // insert into tour table
 
-
     },
-
 
     generateOtp: (req, res) => {
         //Validations
@@ -620,6 +615,8 @@ const controllers = {
             })
         })
     }
+
+
 
 }
 

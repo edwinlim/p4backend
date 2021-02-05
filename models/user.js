@@ -1,6 +1,6 @@
 'use strict';
 const driver = require('./driver')
-const request = require('./request')
+const Request = require('./request')
 
 const {
   Model
@@ -16,15 +16,12 @@ module.exports = (sequelize, DataTypes) => {
         // as: 'driver_details',
         // onDelete: 'CASCADE'
       // }
-      
 
-      User.hasMany(models.Request)
-      // , {
-      //   foreignKey: 'id',
-      //   as: 'users',
-      //   onDelete: 'CASCADE'
-      // })
-    }
+      // User.hasMany(models.Request, {
+      //     foreignKey: 'id',
+      //     onDelete: 'CASCADE'  
+      //   })
+      }
   };
 
 
@@ -115,5 +112,11 @@ module.exports = (sequelize, DataTypes) => {
       underscored: true
     }
   );
-  return User;
+
+    User.associate = models => {
+      User.hasMany(models.Request, {
+        foreignKey: 'sender_id'
+      })
+    }
+    return User;
 };
