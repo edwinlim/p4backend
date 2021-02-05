@@ -100,16 +100,16 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.STRING(20),
           allowNull: false,
       },
-      created_at: {
-          allowNull: false,
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-          allowNull: false,
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-      },
+    //   created_at: {
+    //       allowNull: false,
+    //       type: DataTypes.DATE,
+    //       defaultValue: DataTypes.NOW,
+    //   },
+    //   updated_at: {
+    //       allowNull: false,
+    //       type: DataTypes.DATE,
+    //       defaultValue: DataTypes.NOW,
+    //   },
     }, 
     {
       sequelize,

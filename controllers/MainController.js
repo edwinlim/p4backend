@@ -1,15 +1,25 @@
+
+// npm modules
+const _ = require("lodash")
+const kmeans = require('node-kmeans')
 const { response } = require('express')
+
+// importing the sequilize middleware
 const { Sequelize } = require('../models/index')
 const sequelize = require('../models/index')
+
+// models
 const Request = require('../models/request')
 const RequestModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
-const TourModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const User = require('../models/user')
 const UserModel = User(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Tour = require("../models/tour")
+const TourModel = Tour(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Driver = require("../models/driver")
+const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
-//manual sql scripts
-const db = require('../models/index') 
-const { QueryTypes } = require('sequelize');
+// common functions
+const utility = require("../helper/utility");
 
 const controllers = {
     
@@ -83,67 +93,64 @@ const controllers = {
 
 
     optimize: (req,res) => {
+        let data = []
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
         RequestModel.findAll({
-            where:
-            
-                Sequelize.or(
-                    { status: 1 }
-                )
-            
+            where: { status: 3 } 
         })
         .then (response => {
-            // list of all delivery request with status = 1
-            // res.send(response)
-            if(response.length > 0){
-                UserModel.findAll({
-                    where:{
-                        id: response.map(x=>x['sender_id'])
-                    }
-                }).then(userlist=>{
-                    res.send(userlist)
-                })
+            for (i = 0; i < response.length; i++) {
+
+                data[i] = {
+                    sender_id: response[i].sender_id,
+                    request_id: response[i].request_id,
+                    receiver_lat: response[i].receiver_lat,
+                    receiver_long: response[i].receiver_long
+                }
             }
-        })
-
-        // UserModel.findAll({
-        //     include: [
-        //         {
-        //             model: RequestModel,
-        //             where: { status: '1'}
-        //         }
             
-        // })
-        // .then(result => {
-        //     console.log(result)
-        // })
+            RequestModel.findAll({
+                where: { status : 1 }
+            }).then (results => {
+                if(results.length > 0){
+                    UserModel.findAll({
+                        where:{
+                            id: result.map(x=>x['sender_id'])
+                        }
+                    }).then(pickuplist =>{
+                        res.send(pickuplist)
+                    })
+                }
+            })
 
-        
+            let vectors = new Array();
 
-        // const getData = async () => {
-        //     const requestData = await RequestModel.findAll({include: [{model: UserModel}]})
-        //     res.send(requestData) // [{name: 'Tom', pugs: [{name: 'Cody', ownerId: 1}]}]
-        //   }
+            for (let i = 0; i < data.length; i++) {
+                vectors[i] = [data[i]['receiver_lat'], data[i]['receiver_long']];
+            }
 
-        // getData()
+            //vectors is a list of lat/long
 
-        // RequestModel.findAll({
-        //     where: { status: '1'},
-        //     include: [
-        //         {
-        //             model: UserModel,
-        //             // on: {
-        //             //     id: Sequelize.literal("`RequestModel`.`sender_id` = `UserModel`.`id`") 
-        //             // }
-        //         }
-        //     ]
-        // })
-        // .then(result => {
-        //     res.send(result)
-        // })
+            const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
+                if (err) console.error(err);
+                else //console.log('%o', result);
+                    return result
+            });
 
-        
+            for (i = 0; i < result.groups.length; i++) {
+                console.log(result.groups[i].clusterInd)
+                //write another forloop to get the clusterInd indexes. 
+                for (j = 0; j < result.groups[i].clusterInd.length; j++) {
+                    //console.log(result.groups[i].clusterInd[j])
+                    // console.log(data[result.groups[i].clusterInd[j]])
+                }
+
+            }
+
+            //think how to insert to tourID
+
+        })
 
         // get the latitude and longtitude of the delivery requests of these statuses
 
@@ -156,9 +163,460 @@ const controllers = {
 
         // insert into tour table
 
+    },
+
+    generateOtp: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobId) {
+            res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
+        //if params has type = drop_off code, then it will execute this line else it will execute the line below
+        if (!params.typeOfCode) {
+            res.send(({
+                status: 0,
+                message: "No Type of Code found in Params"
+            }))
+        }
+
+        const deliveryCode = utility.generateOtp()
+
+        if (params.typeOfCode === 'pickup_code') {
+            RequestModel.findOne({
+                where:
+                    Sequelize.or(
+                        { request_id: params.jobId }
+                    )
+
+            })
+                .then(response => {
+                    // validation to check whether the job id is valid or not
+                    if (!response) {
+                        res.send(({
+                            status: 0,
+                            message: "No JOB ID found in DB"
+                        }))
+                    }
+
+                    //if job.Id is found in DB then below code will run if not, the above "if" code will run
+                    // save the otp in db on the record request_id = req.body.jobId
+                    response.update({
+                        pickup_code: deliveryCode
+                    }).then(() => {
+                        let dataToSend = {
+                            status: 1,
+                            message: "OTP Generated"
+                        }
+                        //if the OTP is a normal OTP(you don't have to show it on the client end)
+                        if (params.showOTP) {
+                            dataToSend['otp'] = deliveryCode
+                        }
+                        //if we need to see the OTP on driver end, we pass a param showOTP: true
+                        res.send(dataToSend)
+                    })
+                        .catch((err) => {
+                            res.send(({
+                                status: 0,
+                                message: err
+                            }))
+                        })
 
 
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+        } else {
+            TourModel.findOne({
+                where:
+                    Sequelize.or(
+                        { request_id: params.jobId }
+                    )
+
+            })
+                .then(response => {
+                    // validation to check whether the job id is valid or not
+                    if (!response) {
+                        res.send(({
+                            status: 0,
+                            message: "No JOB ID found in DB"
+                        }))
+                    }
+                    //if job.Id is found in DB then below code will run if not, the above "if" code will run
+                    // save the otp in db on the record request_id = req.body.jobId
+                    response.update({
+                        dropoff_code: deliveryCode
+                    }).then(() => {
+                        let dataToSend = {
+                            status: 1,
+                            message: "OTP Generated"
+                        }
+                        //if the OTP is a normal OTP(you don't have to show it on the client end)
+                        if (params.showOTP) {
+                            dataToSend['otp'] = deliveryCode
+                        }
+                        //if we need to see the OTP on driver end, we pass a param showOTP: true
+                        res.send(dataToSend)
+                    })
+                        .catch((err) => {
+                            res.send(({
+                                status: 0,
+                                message: err
+                            }))
+                        })
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+        }
+    },
+
+    validateOtp: async (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobId) {
+            res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
+        if (!params.otp) {
+            res.send(({
+                status: 0,
+                message: "No OTP found in Params"
+            }))
+        }
+        if (!params.typeOfCode) {
+            res.send(({
+                status: 0,
+                message: "No Type of Code found in Params"
+            }))
+        }
+
+        TourModel.findOne({
+            where:
+                Sequelize.and(
+                    { request_id: params.jobId },
+                    { dropoff_code: params.otp }
+                )
+
+        })
+            .then(async response => {
+                // validation to check whether the job id is valid or not
+                if (!response) {
+                    res.send(({
+                        status: 0,
+                        message: "OTP Not Valid"
+                    }))
+                } else {
+                    /// Pending: write here the code to mark the job as completed
+                    let response = await RequestModel.findOne({
+                        where:
+                            Sequelize.or(
+                                { request_id: params.jobId }
+                            )
+
+                    })
+                    if (response) {
+                        response.update({
+                            status: params.typeOfCode === 'pickup_code' ? 2 : 5
+                        })
+                            .catch(err => {
+                                res.send({
+                                    status: 0,
+                                    message: err
+                                })
+                            })
+                    }
+                    res.send(({
+                        status: 1,
+                        message: "OTP is Valid"
+                    }))
+                }
+
+
+            }).catch(err => {
+                res.send({
+                    status: 0,
+                    message: err
+                })
+            })
+
+    },
+
+    availability: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.driverID) {
+            res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
+
+        if (params.availability === undefined || params.availability === null) {
+            res.send(({
+                status: 0,
+                message: "Availability Required in Params"
+            }))
+        }
+
+        DriverModel.findOne({
+            where:
+                Sequelize.or(
+                    { user_id: params.driverID }
+                )
+
+        })
+            .then(response => {
+                // validation to check whether the job id is valid or not
+                if (!response) {
+                    res.send(({
+                        status: 0,
+                        message: "No Driver found in DB"
+                    }))
+                }
+                response.update({
+                    availability: params.availability ? 1 : 0
+                }).then(() => {
+                    let dataToSend = {
+                        status: 1,
+                        message: "Driver Marked As " + params.availability
+                    }
+                    res.send(dataToSend)
+                })
+                    .catch((err) => {
+                        res.send(({
+                            status: 0,
+                            message: err
+                        }))
+                    })
+
+
+            }).catch(err => {
+                res.send({
+                    status: 0,
+                    message: err
+                })
+            })
+
+    },
+
+    getClusterName: (req, res) => {
+
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.driverID) {
+            res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
+
+        RequestModel.findAll({
+            where: Sequelize.and(
+                { driver_id: params.driverID },
+                Sequelize.or(
+                    {
+                        status: 1
+                    },
+                    {
+                        status: 4
+                    }
+                )
+            )
+        }).then(response => {
+            if (response.length > 0) {
+                TourModel.findAll({
+                    where: {
+                        request_id: response.map(x => x["request_id"])
+                    }
+                }).then(tourData => {
+                    res.send({
+                        status: 1,
+                        message: "Success",
+                        data: tourData.map(x => x['tour_id'])
+                    })
+                })
+                    .catch(err => {
+                        res.send({
+                            status: 0,
+                            message: err
+                        })
+                    })
+            } else {
+                res.send(({
+                    status: 0,
+                    message: "No Active JOBS for the Driver"
+                }))
+            }
+        })
+            .catch(err => {
+                res.send({
+                    status: 0,
+                    message: err
+                })
+            })
+    },
+
+    getBlockName: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.tour_id) {
+            res.send(({
+                status: 0,
+                message: "No Tour ID found in Params"
+            }))
+        }
+        //On the basis of tour_id, fetch all delivery_request
+        TourModel.findAll({
+            where: {
+                tour_id: params.tour_id
+            }
+        }).then(eachTour => {
+            if (eachTour.length > 0) {
+                RequestModel.findAll({
+                    where: {
+                        request_id: eachTour.map(x => x['request_id'])
+                    }
+                }).then(deliveryRequest => {
+                    //delivery request contains all job request with params.tour_id
+                    if (deliveryRequest.length > 0) {
+                        deliveryRequest = deliveryRequest.map(x => {
+                            let obj = x
+                            let newName = ""
+                            if (x['receiver_block_num']) {
+                                newName += x['receiver_block_num'] + " "
+                            }
+                            if (x['receiver_road_name']) {
+                                newName += x['receiver_road_name']
+                            }
+                            obj['newName'] = newName.trim()
+                            return obj
+                        })
+                        let allUniqueBlockArray = []
+                        deliveryRequest.forEach(x => {
+                            allUniqueBlockArray = [...allUniqueBlockArray, ...x['newName']]
+                        })
+                        let finalData = {}
+                        allUniqueBlockArray.forEach(x => {
+                            //return a combination of unique block name and total number of job request 
+                            //corresponding to each block name
+                            finalData[x] = deliveryRequest.filter(y => y['newName'] === x)
+                        })
+                        res.send({
+                            status: 1,
+                            data: finalData
+                        })
+                    } else {
+                        res.send({
+                            status: 0,
+                            message: "No Request with the given tour_id"
+                        })
+                    }
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+            } else {
+                res.send({
+                    status: 0,
+                    message: 'No Tour with the given tour id'
+                })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
+    },
+
+    getJobBasedOnBlock: (req, res) => {
+        //Validations
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.request_id) {
+            res.send(({
+                status: 0,
+                message: "No Request ID found in Params"
+            }))
+        }
+        if (params.request_id.length < 1) {
+            res.send(({
+                status: 0,
+                message: "No Request ID found in Params"
+            }))
+        }
+        RequestModel.findAll({
+            where: {
+                request_id: params.request_id
+            }
+        }).then(allRequests => {
+            if (allRequests.length > 0) {
+                res.send({
+                    status: 1,
+                    data: allRequests
+                })
+            } else {
+                res.send({
+                    status: 0,
+                    message: "No Job Request with the request id provided"
+                })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
     }
+
+
 
 }
 
