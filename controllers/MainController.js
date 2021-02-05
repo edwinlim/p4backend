@@ -7,7 +7,12 @@ const TourModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const User = require('../models/user')
 const UserModel = User(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
+//manual sql scripts
+const db = require('../models/index') 
+const { QueryTypes } = require('sequelize');
+
 const controllers = {
+    
     start: (req, res) => {  
         //to show DB is connected.
 
@@ -84,29 +89,59 @@ const controllers = {
             where:
             
                 Sequelize.or(
-                    { status: 1 },
-                    { status: 3 }
+                    { status: 1 }
                 )
             
         })
         .then (response => {
-            console.log(response)
+            // list of all delivery request with status = 1
+            // res.send(response)
+            if(response.length > 0){
+                UserModel.findAll({
+                    where:{
+                        id: response.map(x=>x['sender_id'])
+                    }
+                }).then(userlist=>{
+                    res.send(userlist)
+                })
+            }
         })
 
-        RequestModel.findAll({
-            where: { status: '1'},
-            include: [
-                {
-                    model: UserModel,
-                    // on: {
-                    //     id: Sequelize.literal("`RequestModel`.`sender_id` = `UserModel`.`id`") 
-                    // }
-                }
-            ]
-        })
-        .then(result => {
-            res.send(result)
-        })
+        // UserModel.findAll({
+        //     include: [
+        //         {
+        //             model: RequestModel,
+        //             where: { status: '1'}
+        //         }
+            
+        // })
+        // .then(result => {
+        //     console.log(result)
+        // })
+
+        
+
+        // const getData = async () => {
+        //     const requestData = await RequestModel.findAll({include: [{model: UserModel}]})
+        //     res.send(requestData) // [{name: 'Tom', pugs: [{name: 'Cody', ownerId: 1}]}]
+        //   }
+
+        // getData()
+
+        // RequestModel.findAll({
+        //     where: { status: '1'},
+        //     include: [
+        //         {
+        //             model: UserModel,
+        //             // on: {
+        //             //     id: Sequelize.literal("`RequestModel`.`sender_id` = `UserModel`.`id`") 
+        //             // }
+        //         }
+        //     ]
+        // })
+        // .then(result => {
+        //     res.send(result)
+        // })
 
         
 

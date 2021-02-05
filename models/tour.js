@@ -34,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.STRING(20),
           allowNull: false,
       },
+      // reason: {
+      //     type: DataTypes.STRING,
+      //     allowNull: true,
+      // },
       created_at: {
           allowNull: false,
           type: DataTypes.DATE,

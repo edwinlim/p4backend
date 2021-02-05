@@ -1,5 +1,5 @@
 'use strict';
-const UserModel = require('./user')
+const User = require('./user')
 
 const { Model } = require('sequelize');
 
@@ -10,14 +10,13 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
-        // define association here
-        Request.belongsTo(models.User)
-        //     , {
-        //   foreignKey: 'id',
-        //   onDelete: 'CASCADE'
-        // })
-      }
+    // static associate(models) {
+    //     // define association here
+    //     Request.belongsTo(models.User, {
+    //       foreignKey: 'sender_id',
+    //       onDelete: 'CASCADE'
+    //     })
+    //   }
   };
 
   Request.init(
@@ -119,6 +118,12 @@ module.exports = (sequelize, DataTypes) => {
       underscored: true,
     }
   );
+
+  Request.associate = models => {
+    Request.belongsTo(models.User, {
+        foreignKey: 'sender_id'
+      })
+  }
 
 
 
