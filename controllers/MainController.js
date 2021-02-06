@@ -619,8 +619,61 @@ const controllers = {
                 message: err
             })
         })
-    }
+    },
 
+    unsuccessfulDelivery: (req, res) => {
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.request_id) {
+            res.send(({
+                status: 0,
+                message: "No Request ID found in Params"
+            }))
+        }
+        if (!params.reason) {
+            res.send(({
+                status: 0,
+                message: "No Reason found in Params"
+            }))
+        }
+        RequestModel.findOne({
+            where: {
+                request_id: params.request_id
+            }
+        }).then(res => {
+            if (res) {
+                res.update({
+                    status: 6,
+                    unsuccessfulDeliveryReason: params.reason
+                }).then(() => {
+                    res.send({
+                        status: 1,
+                        message: "Job Request Marked as Unsuccessfull"
+                    })
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+            } else {
+                res.send({
+                    status: 0,
+                    message: "No Job Request Found in DB"
+                })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
+    }
 }
 
 module.exports = controllers

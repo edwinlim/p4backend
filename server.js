@@ -45,6 +45,8 @@ app.post("/api/v1/getBlockName", mainController.getBlockName)
 
 app.post("/api/v1/getJobBasedOnBlock", mainController.getJobBasedOnBlock)
 
+app.post("/api/v1/unsuccessfulDelivery", mainController.unsuccessfulDelivery)
+
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
 })
