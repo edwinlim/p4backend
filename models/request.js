@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Request.init(
     {
-      request_id: {
+      id: {
           allowNull: false,
           type: DataTypes.BIGINT.UNSIGNED,
           autoIncrement: true,
@@ -100,32 +100,25 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.STRING(20),
           allowNull: false,
       },
-    //   created_at: {
-    //       allowNull: false,
-    //       type: DataTypes.DATE,
-    //       defaultValue: DataTypes.NOW,
-    //   },
-    //   updated_at: {
-    //       allowNull: false,
-    //       type: DataTypes.DATE,
-    //       defaultValue: DataTypes.NOW,
-    //   },
+      created_at: {
+          allowNull: false,
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+          allowNull: false,
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
+      },
     }, 
     {
-      sequelize,
-      modelName: 'Request',
-      tableName: "delivery_requests",
-      underscored: true,
+        timestamps: false,
+        sequelize,
+        modelName: 'Request',
+        tableName: "delivery_requests",
+        underscored: true,
     }
   );
-
-  Request.associate = models => {
-    Request.belongsTo(models.User, {
-        foreignKey: 'sender_id'
-      })
-  }
-
-
 
   return Request;
 };
