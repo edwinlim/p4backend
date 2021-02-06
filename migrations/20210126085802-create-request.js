@@ -2,7 +2,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('delivery_requests', {
-      request_id: {
+      id: {
         allowNull: false,
         type: Sequelize.BIGINT.UNSIGNED,
         autoIncrement: true,

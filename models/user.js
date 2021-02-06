@@ -17,10 +17,7 @@ module.exports = (sequelize, DataTypes) => {
         // onDelete: 'CASCADE'
       // }
 
-      // User.hasMany(models.Request, {
-      //     foreignKey: 'id',
-      //     onDelete: 'CASCADE'  
-      //   })
+
       }
   };
 
@@ -94,18 +91,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(20),
         allowNull: false,
       },
-      // created_at: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW,
-      // },
-      // updated_at: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW,
-      // },
+      created_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     }, 
     {
+      timestamps: false,
       sequelize,
       modelName: 'User',
       tableName: 'users',
@@ -113,10 +111,5 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-    User.associate = models => {
-      User.hasMany(models.Request, {
-        foreignKey: 'sender_id'
-      })
-    }
     return User;
 };
