@@ -43,13 +43,14 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
       },
-          updated_at: {
+      updated_at: {
           allowNull: false,
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
       },
     }, 
     {
+      timestamps: false,
       sequelize,
       modelName: 'Tour',
       tableName: 'tour_details',
