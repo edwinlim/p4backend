@@ -64,6 +64,64 @@ const controllers = {
                     message: err.message || "Some error occurred where creating Request Delivery"
                 })
             })
+    },
+
+    login: (req, res) => {
+        // gets user with the given email
+        UserModel.findOne({
+            where: { email_address: req.body.email}
+        })
+            .then(result => {
+                // Check if found user email address
+                if (!result) {
+                    res.status(401).json({
+                        "success": false,
+                        "message": "Username or password is wrong"
+                    })
+                    return
+                }
+
+                // combine DB user salt with given password, and apply hash algorithm
+                const hash = SHA256(result.pwsalt + req.body.password).toString()
+
+                // check if password is correct by comparing hashes
+                if (hash !== result.hash) {
+                    res.statusCode = 401
+                    res.json({
+                        "success": false,
+                        "message": "Either username or password is wrong"
+                    })
+                    return
+                }
+
+                // login successful, generate JWT
+                const token = jwt.sign({
+                    name: result.first_name,
+                    email: result.email_address,
+                }, process.env.JWT_SECRET, {
+                    algorithm: 'HS384',
+                    expiresIn: "2h"
+                })
+
+                // decode JWT to get raw values
+                const rawJWT = jwt.decode(token)
+
+                // return token as json response
+                res.json({
+                    success: true,
+                    token: token,
+                    expiresAt: rawJWT.exp,
+                    userDetails: result
+                })
+
+            })
+            .catch(err => {
+                res.statusCode = 500
+                res.json({
+                    success: false,
+                    message: "Unable to login due to unexpected error"
+                })
+            })
     }
 }
 
