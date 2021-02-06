@@ -31,31 +31,32 @@ UserModel.hasMany(DriverModel, {
 })
 DriverModel.belongsTo(UserModel, {
     foreignKey: 'id',
-  })
+})
 
 // common functions
 const utility = require("../helper/utility");
+const { times } = require("lodash")
 
 const controllers = {
-    
-    start: (req, res) => {  
+
+    start: (req, res) => {
         //to show DB is connected.
 
         RequestModel.findAll()
             .then(response => {
 
-                
+
                 return res.status(200).json(
                     {
                         success: true,
                         request: response
-                        
+
                     }
-                    
+
                 )
-                
+
             })
-      
+
 
     },
 
@@ -63,7 +64,7 @@ const controllers = {
         const formInputs = req.body.requestForm
 
         // Validate receiver information
-        if (!formInputs.receiverEmail || !formInputs.receiverPostcode){
+        if (!formInputs.receiverEmail || !formInputs.receiverPostcode) {
             res.status(400).send({
                 message: "Receiver information cannot be empty"
             })
@@ -107,14 +108,14 @@ const controllers = {
     },
 
 
-    optimize: (req,res) => {
+    optimize: (req, res) => {
         let data = []
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
         UserModel.findAll({
             // where: {id: 1}
-            include: {model: RequestModel}
-        }).then(response =>{
+            include: { model: RequestModel }
+        }).then(async response => {
             res.send(response)
 
 
@@ -126,22 +127,25 @@ const controllers = {
                             senderId: request.sender_id,
                             requestId: request.id,
                             lat: user.user_lat,
-                            long: user.user_long
+                            long: user.user_long,
+                            requestType: "Pickup",
+                            dropoffCode: request.pickup_code
                         })
-                    }else if (request.status == "3") {
+                    } else if (request.status == "3") {
                         console.log("Status 3")
                         data.push({
                             senderId: request.sender_id,
                             requestId: request.id,
                             lat: request.receiver_lat,
-                            long: request.receiver_long
+                            long: request.receiver_long,
+                            requestType: "Delivery",
+                            dropoffCode: request.pickup_code
                         })
                     }
                 })
             })
 
-            console.log(data)
-         
+
             //vectors is a list of lat/long
             let vectors = new Array();
 
@@ -149,27 +153,48 @@ const controllers = {
                 vectors[i] = [data[i]['lat'], data[i]['long']];
             }
 
-            
-
             // Count available drivers assign to K
+            const drivers = await DriverModel.findAll({
+                where: {
+                    availability: '1'
+                }
+            })
 
-            const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
+            const result = kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
                 if (err) console.error(err);
-                else console.log('%o', result);
+                else //console.log('%o', result);
                     return result
             });
 
-            // for (i = 0; i < result.groups.length; i++) {
-            //     // console.log(result.groups[i].clusterInd)
-            //     //write another forloop to get the clusterInd indexes. 
-            //     for (j = 0; j < result.groups[i].clusterInd.length; j++) {
-            //         //console.log(result.groups[i].clusterInd[j])
-            //         // console.log(data[result.groups[i].clusterInd[j]])
-            //     }
+            for (i = 0; i < result.groups.length; i++) {
+                //write another forloop to get the clusterInd indexes. 
+                for (j = 0; j < result.groups[i].clusterInd.length; j++) {
+                    //console.log(result.groups[i].clusterInd[j])
+                    console.log(data[result.groups[i].clusterInd[j]].requestId)
+                    console.log(data[result.groups[i].clusterInd[j]].requestType)
+                    console.log(data[result.groups[i].clusterInd[j]].dropoffCode)
+                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
+                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
 
-            // }
+                    TourModel.create(
+                        {
+                            request_id: data[result.groups[i].clusterInd[j]].requestId,
+                            tour_id: drivers[i].user_id,
+                            request_type: data[result.groups[i].clusterInd[j]].requestType,
+                            dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
+                            created_at: Date.now(),
+                            updated_at: Date.now()
+                        }
 
-        //     //think how to insert to tourID
+                    )
+                    .then (res => {console.log('sucess')})
+                    .catch(err=>{console.log(err)})
+                }
+            }
+
+
+
+            //     //think how to insert to tourID
 
         })
 
