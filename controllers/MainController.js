@@ -160,7 +160,7 @@ const controllers = {
                 }
             })
 
-            const result = kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
+            const result = await kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
                 if (err) console.error(err);
                 else //console.log('%o', result);
                     return result
@@ -170,15 +170,15 @@ const controllers = {
                 //write another forloop to get the clusterInd indexes. 
                 for (j = 0; j < result.groups[i].clusterInd.length; j++) {
                     //check if request ID already exist in tour_table
-                    TourModel.findOne({
+                    await TourModel.findOne({
                         where: {
                             request_id: data[result.groups[i].clusterInd[j]].requestId
                         }
                     })
-                        .then(res => {
+                        .then(async res => {
                             if (!res) {
                                 console.log('new record')
-                                TourModel.create(
+                                await TourModel.create(
                                     {
                                         request_id: data[result.groups[i].clusterInd[j]].requestId,
                                         tour_id: drivers[i].user_id,
