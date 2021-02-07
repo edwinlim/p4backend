@@ -191,7 +191,9 @@ const controllers = {
                                     }
 
                                 )
-                                    .then(res => { console.log('success') })
+                                    .then(res => { console.log('success') 
+                                        utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+                                })
                                     .catch(err => { console.log(err) })
 
                             } else { console.log('request exist') }
