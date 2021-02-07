@@ -72,7 +72,9 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
-        const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        // const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        const pickupCode = utility.generateOtp()
+        console.log(pickupCode)
 
         // Create delivery data
         const requestDelivery = {
@@ -196,26 +198,10 @@ const controllers = {
                         })
                         .catch(err => { console.log(err) })
 
-
                 }
             }
 
-
-
-            //     //think how to insert to tourID
-
         })
-
-        // get the latitude and longtitude of the delivery requests of these statuses
-
-
-        // put them through clustering algorithm 
-
-
-        // get output of clusters
-
-
-        // insert into tour table
 
     },
 
