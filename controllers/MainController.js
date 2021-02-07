@@ -169,26 +169,34 @@ const controllers = {
             for (i = 0; i < result.groups.length; i++) {
                 //write another forloop to get the clusterInd indexes. 
                 for (j = 0; j < result.groups[i].clusterInd.length; j++) {
-                    //console.log(result.groups[i].clusterInd[j])
-                    console.log(data[result.groups[i].clusterInd[j]].requestId)
-                    console.log(data[result.groups[i].clusterInd[j]].requestType)
-                    console.log(data[result.groups[i].clusterInd[j]].dropoffCode)
-                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
-                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
-
-                    TourModel.create(
-                        {
-                            request_id: data[result.groups[i].clusterInd[j]].requestId,
-                            tour_id: drivers[i].user_id,
-                            request_type: data[result.groups[i].clusterInd[j]].requestType,
-                            dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
-                            created_at: Date.now(),
-                            updated_at: Date.now()
+                    //check if request ID already exist in tour_table
+                    TourModel.findOne({
+                        where: {
+                            request_id: data[result.groups[i].clusterInd[j]].requestId
                         }
+                    })
+                        .then(res => {
+                            if (!res) {
+                                console.log('new record')
+                                TourModel.create(
+                                    {
+                                        request_id: data[result.groups[i].clusterInd[j]].requestId,
+                                        tour_id: drivers[i].user_id,
+                                        request_type: data[result.groups[i].clusterInd[j]].requestType,
+                                        dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
+                                        created_at: Date.now(),
+                                        updated_at: Date.now()
+                                    }
 
-                    )
-                    .then (res => {console.log('sucess')})
-                    .catch(err=>{console.log(err)})
+                                )
+                                    .then(res => { console.log('success') })
+                                    .catch(err => { console.log(err) })
+
+                            } else { console.log('request exist') }
+                        })
+                        .catch(err => { console.log(err) })
+
+
                 }
             }
 
