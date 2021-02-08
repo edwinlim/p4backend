@@ -191,17 +191,31 @@ const controllers = {
                                     }
 
                                 )
-                                    .then(res => { console.log('success') 
+                                    .then(res => {
+                                        console.log('success')
                                         utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
-                                })
+                                    })
                                     .catch(err => { console.log(err) })
 
                             } else { console.log('request exist') }
                         })
                         .catch(err => { console.log(err) })
 
+
+                    //think how to insert to tourID
+
+
+
+                    // get the latitude and longtitude of the delivery requests of these statuses
+
+
+                    // put them through clustering algorithm 
+
+
                 }
             }
+
+            //think how to insert to tourID
 
         })
 
@@ -656,10 +670,61 @@ const controllers = {
                 message: err
             })
         })
+    },
+
+    unsuccessfulDelivery: (req, res) => {
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.request_id) {
+            res.send(({
+                status: 0,
+                message: "No Request ID found in Params"
+            }))
+        }
+        if (!params.reason) {
+            res.send(({
+                status: 0,
+                message: "No Reason found in Params"
+            }))
+        }
+        RequestModel.findOne({
+            where: {
+                request_id: params.request_id
+            }
+        }).then(res => {
+            if (res) {
+                res.update({
+                    status: 7,
+                    reason: params.reason
+                }).then(() => {
+                    res.send({
+                        status: 1,
+                        message: "Job Request Marked as Unsuccessfull"
+                    })
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+            } else {
+                res.send({
+                    status: 0,
+                    message: "No Job Request Found in DB"
+                })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
     }
-
-
-
 }
 
 module.exports = controllers
