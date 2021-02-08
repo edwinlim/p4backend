@@ -201,6 +201,17 @@ const controllers = {
                         })
                         .catch(err => { console.log(err) })
 
+
+                    //think how to insert to tourID
+
+
+
+                    // get the latitude and longtitude of the delivery requests of these statuses
+
+
+                    // put them through clustering algorithm 
+
+
                 }
             }
 
