@@ -53,20 +53,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },
-      // created_at: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW,
-      // },
-      // updated_at: {
-      //   allowNull: false,
-      //   type: DataTypes.DATE,
-      //   defaultValue: DataTypes.NOW,
-      // },
+      created_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     }, 
     
 
     {
+      timestamps: false,
       sequelize,
       modelName: 'Driver',
       tableName: "driver_details",

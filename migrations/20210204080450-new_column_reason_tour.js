@@ -7,7 +7,7 @@ module.exports = {
         {
           type: Sequelize.STRING,
           allowNull: true,
-        }, {after: 'dropoff_code'}
+        }, {after: 'status'}
         );
         return Promise.resolve()
     } catch (e) {

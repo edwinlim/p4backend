@@ -52,10 +52,19 @@ const controllers = {
             country: registrationInput.country,
             user_lat: registrationInput.lat,
             user_long: registrationInput.lng,
-            contact: registrationInput.contact 
+            contact: registrationInput.contact,
+            driver: {
+                   plate_number: '' ,
+                   brand: ''
+                }
+            
         }
 
-        UserModel.create(userAccount)
+        UserModel.create({userAccount}, {
+            include: {
+
+            }
+        })
             .then(data => {
                 res.status(200).send(data)
             })

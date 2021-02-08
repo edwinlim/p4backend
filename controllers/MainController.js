@@ -18,8 +18,24 @@ const TourModel = Tour(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const Driver = require("../models/driver")
 const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
+UserModel.hasMany(RequestModel, {
+    foreignKey: 'sender_id',
+})
+
+RequestModel.belongsTo(UserModel, {
+    foreignKey: 'id',
+})
+
+UserModel.hasMany(DriverModel, {
+    foreignKey: 'user_id',
+})
+DriverModel.belongsTo(UserModel, {
+    foreignKey: 'id',
+})
+
 // common functions
 const utility = require("../helper/utility");
+const { times } = require("lodash")
 
 const controllers = {
 
@@ -56,7 +72,9 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
-        const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        // const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
+        const pickupCode = utility.generateOtp()
+        console.log(pickupCode)
 
         // Create delivery data
         const requestDelivery = {
@@ -96,72 +114,99 @@ const controllers = {
         let data = []
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
-        RequestModel.findAll({
-            where: { status: 3 }
-        })
-            .then(response => {
-                for (i = 0; i < response.length; i++) {
+        UserModel.findAll({
+            // where: {id: 1}
+            include: { model: RequestModel }
+        }).then(async response => {
+            res.send(response)
 
-                    data[i] = {
-                        sender_id: response[i].sender_id,
-                        request_id: response[i].request_id,
-                        receiver_lat: response[i].receiver_lat,
-                        receiver_long: response[i].receiver_long
-                    }
-                }
 
-                RequestModel.findAll({
-                    where: { status: 1 }
-                }).then(results => {
-                    if (results.length > 0) {
-                        UserModel.findAll({
-                            where: {
-                                id: result.map(x => x['sender_id'])
-                            }
-                        }).then(pickuplist => {
-                            res.send(pickuplist)
+            response.map(user => {
+                user.Requests.map(request => {
+                    if (request.status == "1") {
+                        console.log("Status 1")
+                        data.push({
+                            senderId: request.sender_id,
+                            requestId: request.id,
+                            lat: user.user_lat,
+                            long: user.user_long,
+                            requestType: "Pickup",
+                            dropoffCode: request.pickup_code
+                        })
+                    } else if (request.status == "3") {
+                        console.log("Status 3")
+                        data.push({
+                            senderId: request.sender_id,
+                            requestId: request.id,
+                            lat: request.receiver_lat,
+                            long: request.receiver_long,
+                            requestType: "Delivery",
+                            dropoffCode: request.pickup_code
                         })
                     }
                 })
-
-                let vectors = new Array();
-
-                for (let i = 0; i < data.length; i++) {
-                    vectors[i] = [data[i]['receiver_lat'], data[i]['receiver_long']];
-                }
-
-                //vectors is a list of lat/long
-
-                const result = kmeans.clusterize(vectors, { k: 3 }, (err, result) => {
-                    if (err) console.error(err);
-                    else //console.log('%o', result);
-                        return result
-                });
-
-                for (i = 0; i < result.groups.length; i++) {
-                    console.log(result.groups[i].clusterInd)
-                    //write another forloop to get the clusterInd indexes. 
-                    for (j = 0; j < result.groups[i].clusterInd.length; j++) {
-                        //console.log(result.groups[i].clusterInd[j])
-                        // console.log(data[result.groups[i].clusterInd[j]])
-                    }
-
-                }
-
-                //think how to insert to tourID
-
             })
 
-        // get the latitude and longtitude of the delivery requests of these statuses
 
+            //vectors is a list of lat/long
+            let vectors = new Array();
 
-        // put them through clustering algorithm 
+            for (let i = 0; i < data.length; i++) {
+                vectors[i] = [data[i]['lat'], data[i]['long']];
+            }
 
+            // Count available drivers assign to K
+            const drivers = await DriverModel.findAll({
+                where: {
+                    availability: '1'
+                }
+            })
 
-        // get output of clusters
+            const result = await kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
+                if (err) console.error(err);
+                else //console.log('%o', result);
+                    return result
+            });
 
+            for (i = 0; i < result.groups.length; i++) {
+                //write another forloop to get the clusterInd indexes. 
+                for (j = 0; j < result.groups[i].clusterInd.length; j++) {
+                    //check if request ID already exist in tour_table
+                    await TourModel.findOne({
+                        where: {
+                            request_id: data[result.groups[i].clusterInd[j]].requestId
+                        }
+                    })
+                        .then(async res => {
+                            if (!res) {
+                                console.log('new record')
+                                await TourModel.create(
+                                    {
+                                        request_id: data[result.groups[i].clusterInd[j]].requestId,
+                                        tour_id: drivers[i].user_id,
+                                        request_type: data[result.groups[i].clusterInd[j]].requestType,
+                                        dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
+                                        created_at: Date.now(),
+                                        updated_at: Date.now()
+                                    }
 
-        // insert into tour table
+                                )
+                                    .then(res => {
+                                        console.log('success')
+                                        utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+                                    })
+                                    .catch(err => { console.log(err) })
+
+                            } else { console.log('request exist') }
+                        })
+                        .catch(err => { console.log(err) })
+
+                }
+            }
+
+            //think how to insert to tourID
+
+        })
 
     },
 
@@ -643,8 +688,8 @@ const controllers = {
         }).then(res => {
             if (res) {
                 res.update({
-                    status: 6,
-                    unsuccessfulDeliveryReason: params.reason
+                    status: 7,
+                    reason: params.reason
                 }).then(() => {
                     res.send({
                         status: 1,
