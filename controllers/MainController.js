@@ -3,6 +3,7 @@
 const _ = require("lodash")
 const kmeans = require('node-kmeans')
 const { response } = require('express')
+const jwt = require('jsonwebtoken')
 
 // importing the sequilize middleware
 const { Sequelize } = require('../models/index')
@@ -62,6 +63,12 @@ const controllers = {
 
     newRequestDelivery: (req, res) => {
         const formInputs = req.body.requestForm
+        const token = req.headers.auth_token
+
+        const rawJWT = jwt.decode(token)
+
+        console.log(rawJWT)
+
 
         // Validate receiver information
         if (!formInputs.receiverEmail || !formInputs.receiverPostcode) {
@@ -72,13 +79,14 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
+
         // const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
         const pickupCode = utility.generateOtp()
-        console.log(pickupCode)
+
 
         // Create delivery data
         const requestDelivery = {
-            sender_id: 1,
+            sender_id: rawJWT.id,
             receiver_name: formInputs.receiverName,
             receiver_block_num: formInputs.receiverHouseNumber,
             receiver_road_name: formInputs.receiverAddress,
@@ -94,7 +102,7 @@ const controllers = {
             item_qty: formInputs.itemQty,
             special_instructions: formInputs.instructions,
             pickup_code: pickupCode,
-            status: '1',
+            status: '0',
         }
 
         // Save data in the database

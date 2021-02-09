@@ -26,6 +26,10 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.BIGINT.UNSIGNED,
           allowNull: false,    
       },
+      tour_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       request_type: {
           type: DataTypes.STRING(20),
           allowNull: false,
@@ -34,10 +38,6 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.STRING(20),
           allowNull: false,
       },
-      // reason: {
-      //     type: DataTypes.STRING,
-      //     allowNull: true,
-      // },
       created_at: {
           allowNull: false,
           type: DataTypes.DATE,

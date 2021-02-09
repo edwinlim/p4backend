@@ -1,6 +1,5 @@
 'use strict';
 const User = require('./user')
-
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
@@ -115,6 +114,7 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: DataTypes.NOW,
             },
         },
+
         {
             timestamps: false,
             sequelize,
@@ -123,6 +123,7 @@ module.exports = (sequelize, DataTypes) => {
             underscored: true,
         }
     );
+
 
     return Request;
 };
