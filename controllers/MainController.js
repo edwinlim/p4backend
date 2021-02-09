@@ -79,7 +79,10 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
+
+        // const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
         const pickupCode = utility.generateOtp()
+
 
         // Create delivery data
         const requestDelivery = {
@@ -167,7 +170,7 @@ const controllers = {
                 }
             })
 
-            const result = kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
+            const result = await kmeans.clusterize(vectors, { k: drivers.length }, (err, result) => {
                 if (err) console.error(err);
                 else //console.log('%o', result);
                     return result
@@ -176,45 +179,53 @@ const controllers = {
             for (i = 0; i < result.groups.length; i++) {
                 //write another forloop to get the clusterInd indexes. 
                 for (j = 0; j < result.groups[i].clusterInd.length; j++) {
-                    //console.log(result.groups[i].clusterInd[j])
-                    console.log(data[result.groups[i].clusterInd[j]].requestId)
-                    console.log(data[result.groups[i].clusterInd[j]].requestType)
-                    console.log(data[result.groups[i].clusterInd[j]].dropoffCode)
-                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
-                    // console.log(data[result.groups[i].clusterInd[j]].requestId)
-
-                    TourModel.create(
-                        {
-                            request_id: data[result.groups[i].clusterInd[j]].requestId,
-                            tour_id: drivers[i].user_id,
-                            request_type: data[result.groups[i].clusterInd[j]].requestType,
-                            dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
-                            created_at: Date.now(),
-                            updated_at: Date.now()
+                    //check if request ID already exist in tour_table
+                    await TourModel.findOne({
+                        where: {
+                            request_id: data[result.groups[i].clusterInd[j]].requestId
                         }
+                    })
+                        .then(async res => {
+                            if (!res) {
+                                console.log('new record')
+                                await TourModel.create(
+                                    {
+                                        request_id: data[result.groups[i].clusterInd[j]].requestId,
+                                        tour_id: drivers[i].user_id,
+                                        request_type: data[result.groups[i].clusterInd[j]].requestType,
+                                        dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
+                                        created_at: Date.now(),
+                                        updated_at: Date.now()
+                                    }
 
-                    )
-                    .then (res => {console.log('sucess')})
-                    .catch(err=>{console.log(err)})
+                                )
+                                    .then(res => {
+                                        console.log('success')
+                                        utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+                                    })
+                                    .catch(err => { console.log(err) })
+
+                            } else { console.log('request exist') }
+                        })
+                        .catch(err => { console.log(err) })
+
+
+                    //think how to insert to tourID
+
+
+
+                    // get the latitude and longtitude of the delivery requests of these statuses
+
+
+                    // put them through clustering algorithm 
+
+
                 }
             }
 
-
-
-            //     //think how to insert to tourID
+            //think how to insert to tourID
 
         })
-
-        // get the latitude and longtitude of the delivery requests of these statuses
-
-
-        // put them through clustering algorithm 
-
-
-        // get output of clusters
-
-
-        // insert into tour table
 
     },
 
@@ -485,18 +496,18 @@ const controllers = {
         //Validations
         let params = req.body
         if (!params) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Params found"
             }))
         }
         if (!params.driverID) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Driver ID found in Params"
             }))
         }
-
+        console.log(params.driverID)
         RequestModel.findAll({
             where: Sequelize.and(
                 { driver_id: params.driverID },
@@ -513,7 +524,7 @@ const controllers = {
             if (response.length > 0) {
                 TourModel.findAll({
                     where: {
-                        request_id: response.map(x => x["request_id"])
+                        request_id: response.map(x => x["id"])
                     }
                 }).then(tourData => {
                     res.send({
@@ -566,9 +577,19 @@ const controllers = {
         }).then(eachTour => {
             if (eachTour.length > 0) {
                 RequestModel.findAll({
-                    where: {
-                        request_id: eachTour.map(x => x['request_id'])
-                    }
+                    where: Sequelize.and(
+                        {
+                            id: eachTour.map(x => x['request_id'])
+                        },
+                        Sequelize.or(
+                            {
+                                status: 1
+                            },
+                            {
+                                status: 4
+                            }
+                        )
+                    )
                 }).then(deliveryRequest => {
                     //delivery request contains all job request with params.tour_id
                     if (deliveryRequest.length > 0) {
@@ -586,7 +607,7 @@ const controllers = {
                         })
                         let allUniqueBlockArray = []
                         deliveryRequest.forEach(x => {
-                            allUniqueBlockArray = [...allUniqueBlockArray, ...x['newName']]
+                            allUniqueBlockArray.push(x['newName'])
                         })
                         let finalData = {}
                         allUniqueBlockArray.forEach(x => {
@@ -596,7 +617,8 @@ const controllers = {
                         })
                         res.send({
                             status: 1,
-                            data: finalData
+                            data: finalData,
+                            tempData: eachTour
                         })
                     } else {
                         res.send({
@@ -647,7 +669,7 @@ const controllers = {
         }
         RequestModel.findAll({
             where: {
-                request_id: params.request_id
+                id: params.request_id
             }
         }).then(allRequests => {
             if (allRequests.length > 0) {
@@ -667,10 +689,103 @@ const controllers = {
                 message: err
             })
         })
+    },
+
+    unsuccessfulDelivery: (req, res) => {
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.request_id) {
+            res.send(({
+                status: 0,
+                message: "No Request ID found in Params"
+            }))
+        }
+        if (!params.reason) {
+            res.send(({
+                status: 0,
+                message: "No Reason found in Params"
+            }))
+        }
+        RequestModel.findOne({
+            where: {
+                id: params.request_id
+            }
+        }).then(resp => {
+            if (resp) {
+                resp.update({
+                    status: 7,
+                    reason: params.reason
+                }).then(() => {
+                    res.send({
+                        status: 1,
+                        message: "Job Request Marked as Unsuccessfull"
+                    })
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+            } else {
+                res.send({
+                    status: 0,
+                    message: "No Job Request Found in DB"
+                })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
+    },
+
+    getDriverDetails: (req, res) => {
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.driverID) {
+            res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
+        console.log("params", params.driverID)
+        DriverModel.findOne({
+            where:
+                Sequelize.or(
+                    { user_id: params.driverID }
+                )
+        })
+            .then(response => {
+                console.log(response)
+                if (response) {
+                    res.send({
+                        status: 1,
+                        data: response
+                    })
+                } else {
+                    res.send(({
+                        status: 0,
+                        message: "No Driver Details found in DB"
+                    }))
+                }
+            }).catch(err => {
+                res.send({
+                    status: 0,
+                    message: err
+                })
+            })
     }
-
-
-
 }
 
 module.exports = controllers
