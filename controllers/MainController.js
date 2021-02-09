@@ -4,6 +4,7 @@ const _ = require("lodash")
 const kmeans = require('node-kmeans')
 const { response } = require('express')
 const jwt = require('jsonwebtoken')
+const lodash = require("lodash")
 
 // importing the sequilize middleware
 const { Sequelize } = require('../models/index')
@@ -566,10 +567,20 @@ const controllers = {
                         request_id: response.map(x => x["id"])
                     }
                 }).then(tourData => {
+                    let tempTourData = utility.removeDuplicatesFromList(JSON.parse(JSON.stringify(tourData)).map(x => x['tour_id']))
+                    let finalData = []
+                    tempTourData.forEach((x, i) => {
+                        let filterData = tourData.filter(y => y['tour_id'] === x).length
+                        finalData.push({
+                            label: "Cluster " + String.fromCharCode(65 + i),
+                            id: x,
+                            length: filterData
+                        })
+                    })
                     res.send({
                         status: 1,
                         message: "Success",
-                        data: tourData
+                        data: lodash.orderBy(finalData, ['length'], ['desc'])
                     })
                 })
                     .catch(err => {
@@ -723,7 +734,7 @@ const controllers = {
             if (allRequests.length > 0) {
                 res.send({
                     status: 1,
-                    data: allRequests
+                    data: lodash.orderBy(allRequests, ['receiver_floor'], ['desc'])
                 })
             } else {
                 res.send({
