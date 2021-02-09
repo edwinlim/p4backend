@@ -102,6 +102,12 @@ controllers = {
 
 
 
+    },
+
+    removeDuplicatesFromList: (data) => {
+        return data.filter(function (item, pos) {
+            return data.indexOf(item) === pos
+        })
     }
 
 }
