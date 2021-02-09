@@ -488,18 +488,18 @@ const controllers = {
         //Validations
         let params = req.body
         if (!params) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Params found"
             }))
         }
         if (!params.driverID) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Driver ID found in Params"
             }))
         }
-
+        console.log(params.driverID)
         RequestModel.findAll({
             where: Sequelize.and(
                 { driver_id: params.driverID },
@@ -516,7 +516,7 @@ const controllers = {
             if (response.length > 0) {
                 TourModel.findAll({
                     where: {
-                        request_id: response.map(x => x["request_id"])
+                        request_id: response.map(x => x["id"])
                     }
                 }).then(tourData => {
                     res.send({
@@ -569,9 +569,19 @@ const controllers = {
         }).then(eachTour => {
             if (eachTour.length > 0) {
                 RequestModel.findAll({
-                    where: {
-                        request_id: eachTour.map(x => x['request_id'])
-                    }
+                    where: Sequelize.and(
+                        {
+                            id: eachTour.map(x => x['request_id'])
+                        },
+                        Sequelize.or(
+                            {
+                                status: 1
+                            },
+                            {
+                                status: 4
+                            }
+                        )
+                    )
                 }).then(deliveryRequest => {
                     //delivery request contains all job request with params.tour_id
                     if (deliveryRequest.length > 0) {
@@ -589,7 +599,7 @@ const controllers = {
                         })
                         let allUniqueBlockArray = []
                         deliveryRequest.forEach(x => {
-                            allUniqueBlockArray = [...allUniqueBlockArray, ...x['newName']]
+                            allUniqueBlockArray.push(x['newName'])
                         })
                         let finalData = {}
                         allUniqueBlockArray.forEach(x => {
@@ -599,7 +609,8 @@ const controllers = {
                         })
                         res.send({
                             status: 1,
-                            data: finalData
+                            data: finalData,
+                            tempData: eachTour
                         })
                     } else {
                         res.send({
@@ -650,7 +661,7 @@ const controllers = {
         }
         RequestModel.findAll({
             where: {
-                request_id: params.request_id
+                id: params.request_id
             }
         }).then(allRequests => {
             if (allRequests.length > 0) {
@@ -694,11 +705,11 @@ const controllers = {
         }
         RequestModel.findOne({
             where: {
-                request_id: params.request_id
+                id: params.request_id
             }
-        }).then(res => {
-            if (res) {
-                res.update({
+        }).then(resp => {
+            if (resp) {
+                resp.update({
                     status: 7,
                     reason: params.reason
                 }).then(() => {
@@ -724,6 +735,48 @@ const controllers = {
                 message: err
             })
         })
+    },
+
+    getDriverDetails: (req, res) => {
+        let params = req.body
+        if (!params) {
+            res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.driverID) {
+            res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
+        console.log("params", params.driverID)
+        DriverModel.findOne({
+            where:
+                Sequelize.or(
+                    { user_id: params.driverID }
+                )
+        })
+            .then(response => {
+                console.log(response)
+                if (response) {
+                    res.send({
+                        status: 1,
+                        data: response
+                    })
+                } else {
+                    res.send(({
+                        status: 0,
+                        message: "No Driver Details found in DB"
+                    }))
+                }
+            }).catch(err => {
+                res.send({
+                    status: 0,
+                    message: err
+                })
+            })
     }
 }
 
