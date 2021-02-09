@@ -201,9 +201,7 @@ const controllers = {
                         })
                         .catch(err => { console.log(err) })
 
-
                     //think how to insert to tourID
-
 
 
                     // get the latitude and longtitude of the delivery requests of these statuses
@@ -250,12 +248,12 @@ const controllers = {
             RequestModel.findOne({
                 where:
                     Sequelize.or(
-                        { request_id: params.jobId }
+                        { id: params.jobId }
                     )
 
             })
                 .then(response => {
-                    // validation to check whether the job id is valid or not
+                    // validation to check whether the job id is valid/active or not
                     if (!response) {
                         res.send(({
                             status: 0,
@@ -368,15 +366,15 @@ const controllers = {
             }))
         }
 
-        TourModel.findOne({
-            where:
-                Sequelize.and(
-                    { request_id: params.jobId },
-                    { dropoff_code: params.otp }
-                )
+        if (params.typeOfCode === 'pickup_code') {
+            RequestModel.findOne({
+                where:
+                    Sequelize.and(
+                        { id: params.jobId },
+                        { otp: params.otp }
+                    )
 
-        })
-            .then(async response => {
+            }).then(async response => {
                 // validation to check whether the job id is valid or not
                 if (!response) {
                     res.send(({
@@ -384,29 +382,22 @@ const controllers = {
                         message: "OTP Not Valid"
                     }))
                 } else {
-                    /// Pending: write here the code to mark the job as completed
-                    let response = await RequestModel.findOne({
-                        where:
-                            Sequelize.or(
-                                { request_id: params.jobId }
-                            )
 
+                    response.update({
+                        status: 2
                     })
-                    if (response) {
-                        response.update({
-                            status: params.typeOfCode === 'pickup_code' ? 2 : 5
-                        })
-                            .catch(err => {
-                                res.send({
-                                    status: 0,
-                                    message: err
-                                })
+                        .catch(err => {
+                            res.send({
+                                status: 0,
+                                message: err
                             })
-                    }
+                        })
+
                     res.send(({
                         status: 1,
                         message: "OTP is Valid"
                     }))
+
                 }
 
 
@@ -416,7 +407,56 @@ const controllers = {
                     message: err
                 })
             })
+        } else {
+            TourModel.findOne({
+                where:
+                    Sequelize.and(
+                        { request_id: params.jobId },
+                        { dropoff_code: params.otp }
+                    )
 
+            })
+                .then(async resp => {
+                    // validation to check whether the job id is valid or not
+                    if (!resp) {
+                        res.send(({
+                            status: 0,
+                            message: "OTP Not Valid"
+                        }))
+                    } else {
+                        /// Pending: write here the code to mark the job as completed
+                        let response = await RequestModel.findOne({
+                            where:
+                                Sequelize.or(
+                                    { id: params.jobId }
+                                )
+
+                        })
+                        if (response) {
+                            response.update({
+                                status: 6
+                            })
+                                .catch(err => {
+                                    res.send({
+                                        status: 0,
+                                        message: err
+                                    })
+                                })
+                        }
+                        res.send(({
+                            status: 1,
+                            message: "OTP is Valid"
+                        }))
+                    }
+
+
+                }).catch(err => {
+                    res.send({
+                        status: 0,
+                        message: err
+                    })
+                })
+        }
     },
 
     availability: (req, res) => {
@@ -499,7 +539,6 @@ const controllers = {
                 message: "No Driver ID found in Params"
             }))
         }
-        console.log(params.driverID)
         RequestModel.findAll({
             where: Sequelize.and(
                 { driver_id: params.driverID },
@@ -508,7 +547,7 @@ const controllers = {
                         status: 1
                     },
                     {
-                        status: 4
+                        status: 5
                     }
                 )
             )
@@ -522,7 +561,7 @@ const controllers = {
                     res.send({
                         status: 1,
                         message: "Success",
-                        data: tourData.map(x => x['tour_id'])
+                        data: tourData
                     })
                 })
                     .catch(err => {
@@ -561,11 +600,19 @@ const controllers = {
                 message: "No Tour ID found in Params"
             }))
         }
+        if (!params.driverID) {
+            return res.send(({
+                status: 0,
+                message: "No Driver ID found in Params"
+            }))
+        }
         //On the basis of tour_id, fetch all delivery_request
         TourModel.findAll({
-            where: {
-                tour_id: params.tour_id
-            }
+            where: Sequelize.and(
+                {
+                    tour_id: params.tour_id
+                }
+            )
         }).then(eachTour => {
             if (eachTour.length > 0) {
                 RequestModel.findAll({
@@ -573,12 +620,13 @@ const controllers = {
                         {
                             id: eachTour.map(x => x['request_id'])
                         },
+                        { driver_id: params.driverID },
                         Sequelize.or(
                             {
                                 status: 1
                             },
                             {
-                                status: 4
+                                status: 5
                             }
                         )
                     )
@@ -686,19 +734,19 @@ const controllers = {
     unsuccessfulDelivery: (req, res) => {
         let params = req.body
         if (!params) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Params found"
             }))
         }
         if (!params.request_id) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Request ID found in Params"
             }))
         }
         if (!params.reason) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Reason found in Params"
             }))
@@ -740,18 +788,17 @@ const controllers = {
     getDriverDetails: (req, res) => {
         let params = req.body
         if (!params) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Params found"
             }))
         }
         if (!params.driverID) {
-            res.send(({
+            return res.send(({
                 status: 0,
                 message: "No Driver ID found in Params"
             }))
         }
-        console.log("params", params.driverID)
         DriverModel.findOne({
             where:
                 Sequelize.or(
@@ -759,7 +806,6 @@ const controllers = {
                 )
         })
             .then(response => {
-                console.log(response)
                 if (response) {
                     res.send({
                         status: 1,
