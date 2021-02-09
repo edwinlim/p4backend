@@ -102,7 +102,7 @@ module.exports = (sequelize, DataTypes) => {
             },
             reason: {
                 type: DataTypes.STRING(20),
-                allowNull: false,
+                allowNull: true,
             },
             created_at: {
                 allowNull: false,
