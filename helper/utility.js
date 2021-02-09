@@ -6,6 +6,7 @@ const { Sequelize } = require('../models/index')
 const sequelize = require('../models/index')
 const Request = require('../models/request')
 const RequestModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const lodash = require("lodash")
 
 controllers = {
 
