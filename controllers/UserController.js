@@ -1,3 +1,4 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken')
 const { response } = require('express')
 const sequelize = require('../models/index')
@@ -5,6 +6,8 @@ const SHA256 = require("crypto-js/sha256")
 const uuid = require('uuid')
 const User = require('../models/user')
 const UserModel = User(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Driver = require("../models/driver")
+const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
 const controllers = {
     register: (req, res) => {
@@ -16,7 +19,6 @@ const controllers = {
             where: { email_address: registrationInput.email}
         })
             .then(result => {
-                console.log(result)
                 if (result) {
                    return res.status(400).json({ 
                         status: "Failed",
@@ -53,19 +55,19 @@ const controllers = {
             user_lat: registrationInput.lat,
             user_long: registrationInput.lng,
             contact: registrationInput.contact,
-            driver: {
-                   plate_number: '' ,
-                   brand: ''
-                }
-            
         }
 
-        UserModel.create({userAccount}, {
-            include: {
-
-            }
-        })
+        UserModel.create(userAccount)
             .then(data => {
+
+                DriverModel.create({
+                    user_id: data.id,
+                    plate_number: registrationInput.plate,
+                    vehicle_type: registrationInput.model,
+                    remark: registrationInput.otherinfor,
+                    availability: true
+                })
+
                 res.status(200).send(data)
             })
             .catch(err => {
@@ -76,14 +78,15 @@ const controllers = {
     },
 
     login: (req, res) => {
+        
         // gets user with the given email
         UserModel.findOne({
             where: { email_address: req.body.email}
         })
             .then(result => {
                 // Check if found user email address
-                if (!result) {
-                    res.status(401).json({
+                if (result === null) {
+                    res.send({
                         "success": false,
                         "message": "Username or password is wrong"
                     })
@@ -94,19 +97,19 @@ const controllers = {
                 const hash = SHA256(result.pwsalt + req.body.password).toString()
 
                 // check if password is correct by comparing hashes
-                if (hash !== result.hash) {
-                    res.statusCode = 401
-                    res.json({
+                if (hash !== result.password) {
+                    res.send({
                         "success": false,
                         "message": "Either username or password is wrong"
                     })
                     return
                 }
-
+                console.log(result)
                 // login successful, generate JWT
                 const token = jwt.sign({
+                    id: result.id,
                     name: result.first_name,
-                    email: result.email_address,
+                    role: result.user_roles,
                 }, process.env.JWT_SECRET, {
                     algorithm: 'HS384',
                     expiresIn: "2h"
@@ -116,17 +119,17 @@ const controllers = {
                 const rawJWT = jwt.decode(token)
 
                 // return token as json response
-                res.json({
-                    success: true,
-                    token: token,
-                    expiresAt: rawJWT.exp,
-                    userDetails: result
+
+                res.status(200).json({
+                    "success": true,
+                    "token": token,
+                    "expiresAt": rawJWT.exp,
+                    "userDetails": result,
                 })
 
             })
             .catch(err => {
-                res.statusCode = 500
-                res.json({
+                res.status(500).json({
                     success: false,
                     message: "Unable to login due to unexpected error"
                 })

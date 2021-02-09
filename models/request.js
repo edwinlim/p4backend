@@ -1,6 +1,5 @@
 'use strict';
 const User = require('./user')
-
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
@@ -99,6 +98,10 @@ module.exports = (sequelize, DataTypes) => {
       status: {
           type: DataTypes.STRING(20),
           allowNull: false,
+      },
+      reason: {
+          type: DataTypes.STRING,
+          allowNull: true,
       },
       created_at: {
           allowNull: false,

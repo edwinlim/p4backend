@@ -3,12 +3,12 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.addColumn('delivery_requests', 'reason',
+      await queryInterface.addColumn('tour_details', 'tour_name',
         {
           type: Sequelize.STRING,
           allowNull: true,
-        }, {after: 'status'}
-        );
+        }, {after: "tour_id" }
+      );
         return Promise.resolve()
     } catch (e) {
       return Promise.reject(e)
@@ -17,7 +17,7 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.removeColumn('delivery_requests', 'reason')
+      await queryInterface.removeColumn('tour_details', 'tour_name')
       return Promise.resolve()
     } catch (e) {
       return Promise.reject(e)
