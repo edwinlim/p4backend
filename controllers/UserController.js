@@ -11,20 +11,20 @@ const DriverModel = Driver(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 
 const controllers = {
     register: (req, res) => {
-        
+
         const registrationInput = req.body.register
 
         // Check if email exists in Database
         UserModel.findOne({
-            where: { email_address: registrationInput.email}
+            where: { email_address: registrationInput.email }
         })
             .then(result => {
                 if (result) {
-                   return res.status(400).json({ 
+                    return res.status(400).json({
                         status: "Failed",
-                        error: "Registered Account" 
+                        error: "Registered Account"
                     })
-                
+
                 }
             })
 
@@ -78,18 +78,21 @@ const controllers = {
     },
 
     login: (req, res) => {
-        
+
         // gets user with the given email
         UserModel.findOne({
-            where: { email_address: req.body.email}
+            where: { email_address: req.body.email }
         })
             .then(result => {
+
                 // Check if found user email address
                 if (result === null) {
+
                     res.send({
                         "success": false,
                         "message": "Username or password is wrong"
                     })
+
                     return
                 }
 
@@ -104,7 +107,6 @@ const controllers = {
                     })
                     return
                 }
-                console.log(result)
                 // login successful, generate JWT
                 const token = jwt.sign({
                     id: result.id,
@@ -114,6 +116,7 @@ const controllers = {
                     algorithm: 'HS384',
                     expiresIn: "2h"
                 })
+
 
                 // decode JWT to get raw values
                 const rawJWT = jwt.decode(token)
