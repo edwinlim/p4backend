@@ -122,7 +122,7 @@ const controllers = {
     optimize: (req, res) => {
         let data = []
 
-        // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
+        // get all delivery requests where status is 'ready to pickup' and 'in wharehouse' Status == 1 or status == 3. 
         UserModel.findAll({
             // where: {id: 1}
             include: { model: RequestModel }
@@ -144,13 +144,14 @@ const controllers = {
                         })
                     } else if (request.status == "3") {
                         console.log("Status 3")
+                        let dropoffcode = utility.generateOtp()
                         data.push({
                             senderId: request.sender_id,
                             requestId: request.id,
                             lat: request.receiver_lat,
                             long: request.receiver_long,
                             requestType: "Delivery",
-                            dropoffCode: request.pickup_code
+                            dropoffCode: dropoffcode // dropoff code: needs to be different from the pickup code
                         })
                     }
                 })
