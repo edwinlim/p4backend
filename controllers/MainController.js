@@ -122,13 +122,13 @@ const controllers = {
     optimize: (req, res) => {
         let data = []
 
-        // get all delivery requests where status is 'ready to pickup' and 'in wharehouse'. 
+        // get all delivery requests where status is 'ready to pickup' and 'in wharehouse' where status = 1 or 3
         UserModel.findAll({
             // where: {id: 1}
             include: { model: RequestModel }
         }).then(async response => {
             res.send(response)
-
+            //
 
             response.map(user => {
                 user.Requests.map(request => {
