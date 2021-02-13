@@ -128,7 +128,7 @@ const controllers = {
             include: { model: RequestModel }
         }).then(async response => {
             res.send(response)
-
+            //
 
             response.map(user => {
                 user.Requests.map(request => {
@@ -851,11 +851,11 @@ const controllers = {
         RequestModel.findAll()
 
             .then(results => {
-              
+
                 if (results) {
 
                     results = {
-                        "success":"true",
+                        "success": "true",
                         "NoOfRequests": results.length,
                         "RequestsList": results
 
@@ -865,7 +865,7 @@ const controllers = {
 
                     return
                 }
-                
+
 
             })
 
