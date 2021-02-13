@@ -25,6 +25,8 @@ app.use(express.json())
 
 app.get("/optimize", mainController.optimize)
 
+app.get("/api/v1/getRequest", mainController.getRequests)
+
 app.get("/", mainController.start)
 // user registration
 app.post('/api/v1/user/login', usersController.login)
@@ -38,8 +40,6 @@ app.post("/api/v1/otpGenerator", mainController.generateOtp)
 app.post("/api/v1/otpValidtor", mainController.validateOtp)
 
 app.post("/api/v1/availability", mainController.availability)
-
-app.get("/optimize", mainController.optimize)
 
 app.post("/api/v1/getClusterName", mainController.getClusterName)
 

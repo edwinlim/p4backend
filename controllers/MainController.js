@@ -843,6 +843,33 @@ const controllers = {
                     message: err
                 })
             })
+    },
+
+    getRequests: (req, res) => {
+        //to show DB is connected.
+
+        RequestModel.findAll()
+
+            .then(results => {
+              
+                if (results) {
+
+                    results = {
+                        "success":"true",
+                        "NoOfRequests": results.length,
+                        "RequestsList": results
+
+                    }
+
+                    res.send(results)
+
+                    return
+                }
+                
+
+            })
+
+
     }
 }
 
