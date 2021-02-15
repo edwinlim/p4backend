@@ -108,6 +108,22 @@ controllers = {
         return data.filter(function (item, pos) {
             return data.indexOf(item) === pos
         })
+    },
+
+    getMarkerIcons: (clusterName) => {
+        let markerData = {
+            1: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_gray.png",
+            2: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_green.png",
+            3: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_purple.png",
+            4: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_orange.png",
+            5: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_red.png",
+            6: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_white.png",
+            7: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_yellow.png",
+            8: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_black.png",
+            9: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_blue.png",
+            10: "https://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_brown.png",
+        }
+        return markerData[clusterName] ? markerData[clusterName] : ""
     }
 
 }
