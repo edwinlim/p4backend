@@ -25,6 +25,9 @@ app.use(express.json())
 
 app.get("/optimize", mainController.optimize)
 
+app.get("/api/v1/getRequest", mainController.getRequests)
+
+app.get("/", mainController.start)
 
 // user registration
 app.post('/api/v1/user/login', usersController.login)
@@ -39,8 +42,6 @@ app.post("/api/v1/otpValidtor", mainController.validateOtp)
 
 app.post("/api/v1/availability", mainController.availability)
 
-app.get("/optimize", mainController.optimize)
-
 app.post("/api/v1/getClusterName", mainController.getClusterName)
 
 app.post("/api/v1/getBlockName", mainController.getBlockName)
@@ -51,7 +52,8 @@ app.post("/api/v1/unsuccessfulDelivery", mainController.unsuccessfulDelivery)
 
 app.post("/api/v1/getDriverDetails", mainController.getDriverDetails)
 
-app.get("/", mainController.start)
+app.post("/api/v1/getMapData", mainController.getMapData)
+
 
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
