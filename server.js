@@ -28,12 +28,13 @@ app.get("/optimize", mainController.optimize)
 app.get("/api/v1/getRequest", mainController.getRequests)
 
 app.get("/", mainController.start)
+
 // user registration
 app.post('/api/v1/user/login', usersController.login)
 app.post('/api/v1/user/register', usersController.register)
 
 app.post("/api/v1/newrequest", mainController.newRequestDelivery)
-app.get("/optimize", mainController.optimize)
+app.post("/api/v1/getSenderRequests/:id", mainController.getSenderRequests)
 
 app.post("/api/v1/otpGenerator", mainController.generateOtp)
 
@@ -52,6 +53,7 @@ app.post("/api/v1/unsuccessfulDelivery", mainController.unsuccessfulDelivery)
 app.post("/api/v1/getDriverDetails", mainController.getDriverDetails)
 
 app.post("/api/v1/getMapData", mainController.getMapData)
+
 
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
