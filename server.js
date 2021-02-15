@@ -51,6 +51,8 @@ app.post("/api/v1/unsuccessfulDelivery", mainController.unsuccessfulDelivery)
 
 app.post("/api/v1/getDriverDetails", mainController.getDriverDetails)
 
+app.post("/api/v1/getMapData", mainController.getMapData)
+
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
 })

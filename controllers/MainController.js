@@ -5,6 +5,7 @@ const kmeans = require('node-kmeans')
 const { response } = require('express')
 const jwt = require('jsonwebtoken')
 const lodash = require("lodash")
+const { Op } = require("sequelize")
 
 // importing the sequilize middleware
 const { Sequelize } = require('../models/index')
@@ -38,6 +39,7 @@ DriverModel.belongsTo(UserModel, {
 // common functions
 const utility = require("../helper/utility");
 const { times } = require("lodash")
+const tour = require("../models/tour")
 
 const controllers = {
 
@@ -870,6 +872,82 @@ const controllers = {
             })
 
 
+    },
+
+    getMapData: (req, res) => {
+        RequestModel.findAll({
+            where: Sequelize.and(
+                {
+                    status: {
+                        [Op.not]: 2
+                    }
+                },
+                {
+                    status: {
+                        [Op.not]: 6
+                    }
+                }
+            )
+        }).then(allrequests => {
+            if (allrequests.length > 0) {
+                TourModel.findAll({
+                    where: {
+                        //In delivery request, we have id & tour details - request_id
+                        request_id: JSON.parse(JSON.stringify(allrequests)).map(x => x['id'])
+                    }
+                })
+                    .then(alltourData => {
+                        if (alltourData.length > 0) {
+                            //mapping all delivery request with tour_id
+                            let allDeliRequ = []
+                            allrequests.forEach(x => {
+                                let obj = { ...x['dataValues'] }
+                                let findTour = alltourData.find(y => y['request_id'] === x['id'])
+                                if (findTour) {
+                                    obj['tour_id'] = findTour['tour_id']
+                                }
+                                allDeliRequ.push({
+                                    tour_id: obj['tour_id'],
+                                    latLng: {
+                                        lat: Number(obj['receiver_lat']),
+                                        lng: Number(obj['receiver_long'])
+                                    },
+                                    request_id: obj['id']
+                                })
+                            })
+                            let groupedData = _.groupBy(allDeliRequ, 'tour_id')
+                            let allDeliReqWithMarker = []
+                            Object.keys(groupedData).forEach((x, i) => {
+                                if (groupedData[x]) {
+                                    allDeliReqWithMarker = [
+                                        ...allDeliReqWithMarker,
+                                        ...groupedData[x].map(y => {
+                                            return {
+                                                ...y,
+                                                markerIcon: utility.getMarkerIcons(i + 1)
+                                            }
+                                        })
+                                    ]
+                                }
+                            })
+                            res.send({
+                                status: 1,
+                                data: allDeliReqWithMarker
+                            })
+                        }
+                    }).catch(err => {
+                        res.send({
+                            status: 0,
+                            message: err
+                        })
+                    })
+            }
+        }).catch(err => {
+            res.send({
+                status: 0,
+                message: err
+            })
+        })
     }
 }
 
