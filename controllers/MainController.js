@@ -430,6 +430,7 @@ const controllers = {
             })
                 .then(async resp => {
                     // validation to check whether the job id is valid or not
+                    console.log(resp)
                     if (!resp) {
                         res.send(({
                             status: 0,
