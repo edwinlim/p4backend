@@ -46,30 +46,19 @@ const controllers = {
 
         RequestModel.findAll()
             .then(response => {
-
-
                 return res.status(200).json(
                     {
                         success: true,
                         request: response
-
                     }
-
                 )
-
             })
-
-
     },
 
     newRequestDelivery: (req, res) => {
         const formInputs = req.body.requestForm
         const token = req.headers.auth_token
-
         const rawJWT = jwt.decode(token)
-
-        console.log(rawJWT)
-
 
         // Validate receiver information
         if (!formInputs.receiverEmail || !formInputs.receiverPostcode) {
@@ -80,8 +69,6 @@ const controllers = {
         }
 
         // Generate Random 4 digits number
-
-        // const pickupCode = (Math.floor(Math.random() * 10000) + 10000).toString().substring(1);
         const pickupCode = utility.generateOtp()
 
 
@@ -114,6 +101,23 @@ const controllers = {
             .catch(err => {
                 res.status(500).send({
                     message: err.message || "Some error occurred where creating Request Delivery"
+                })
+            })
+    },
+
+    getSenderRequests: (req, res) => {
+
+        RequestModel.findAll({
+            where: {sender_id: req.params.id}
+        })
+            .then(response => {
+                return res.status(200).json({
+                    request: response
+                })
+            })
+            .catch(error => {
+                return res.status(500).send({
+                    message: error.message || "Some error occurred where geting data"
                 })
             })
     },

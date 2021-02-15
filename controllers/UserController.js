@@ -60,14 +60,16 @@ const controllers = {
         UserModel.create(userAccount)
             .then(data => {
 
-                DriverModel.create({
-                    user_id: data.id,
-                    plate_number: registrationInput.plate,
-                    vehicle_type: registrationInput.model,
-                    remark: registrationInput.otherinfor,
-                    availability: true
-                })
-
+                if (data.user_roles !== 1) {
+                    DriverModel.create({
+                        user_id: data.id,
+                        plate_number: registrationInput.plate,
+                        vehicle_type: registrationInput.model,
+                        remark: registrationInput.otherinfor,
+                        availability: true
+                    })
+                }
+                
                 res.status(200).send(data)
             })
             .catch(err => {
