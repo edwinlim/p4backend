@@ -127,6 +127,7 @@ const controllers = {
 
     optimize: (req, res) => {
         let data = []
+        console.log('route hit')
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse' Status == 1 or status == 3. 
         UserModel.findAll({
