@@ -110,7 +110,7 @@ const controllers = {
     getSenderRequests: (req, res) => {
 
         RequestModel.findAll({
-            where: {sender_id: req.params.id}
+            where: { sender_id: req.params.id }
         })
             .then(response => {
                 return res.status(200).json({
@@ -127,6 +127,7 @@ const controllers = {
 
     optimize: (req, res) => {
         let data = []
+        console.log('route hit')
 
         // get all delivery requests where status is 'ready to pickup' and 'in wharehouse' Status == 1 or status == 3. 
         UserModel.findAll({
@@ -217,19 +218,11 @@ const controllers = {
                         })
                         .catch(err => { console.log(err) })
 
-                    //think how to insert to tourID
-
-
-                    // get the latitude and longtitude of the delivery requests of these statuses
-
-
-                    // put them through clustering algorithm 
-
 
                 }
             }
 
-            //think how to insert to tourID
+
 
         })
 
@@ -953,7 +946,60 @@ const controllers = {
                 message: err
             })
         })
+    },
+
+    queryDelivery: (req, res) => {
+
+        console.log(req.body.searchItem)
+        
+        RequestModel.findOne(
+            {
+                where: Sequelize.or
+                    (
+                        { receiver_email: req.body.searchItem },
+                        { receiver_contact: req.body.searchItem }
+                    )
+            })
+            .then(result => {
+                
+                   
+                   
+                    switch (result.status) {
+                        case "0":    // Submitted Request (Edwin to change 0->1 after clusterize)
+                            res.send('Request Submitted')
+
+                            break;
+                        case "1":   //Picked up (Admin to change status from 2->3 … arrived at wharehouse))
+                            res.send('Ready for pickup')
+                            break;
+
+                        case "2":   // In Warehouse (Edwin clusterize 3->4)
+                            res.send("Picked Up")
+                            break;
+
+                        case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
+                            res.send("In Wharehouse")
+                            break;
+
+                        case "4":   //On the way (John to change from 5->6 when OTP successful)
+                            res.send("Ready to Deliver")
+                            break;
+
+                        case "5":   //Delivered successfully
+                            res.send("On the Way")
+
+                        case "6":   //Delivered successfully
+                            res.send("Delivered Successfull")
+
+                        default:
+
+
+                    }
+
+                
+            })
     }
 }
+
 
 module.exports = controllers
