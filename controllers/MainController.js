@@ -5,6 +5,7 @@ const kmeans = require('node-kmeans')
 const { response } = require('express')
 const jwt = require('jsonwebtoken')
 const lodash = require("lodash")
+const axios = require('axios')
 const { Op } = require("sequelize")
 
 // importing the sequilize middleware
@@ -41,11 +42,10 @@ const utility = require("../helper/utility");
 const { times } = require("lodash")
 const tour = require("../models/tour")
 
+
 const controllers = {
 
     start: (req, res) => {
-        //to show DB is connected.
-
         RequestModel.findAll()
             .then(response => {
                 return res.status(200).json(
@@ -121,6 +121,70 @@ const controllers = {
                 return res.status(500).send({
                     message: error.message || "Some error occurred where geting data"
                 })
+            })
+    },
+
+    batchDeliveryUpdate: (req, res) => {
+
+        const bulkData = req.body.list
+        const token = req.headers.auth_token
+        const rawJWT = jwt.decode(token)
+
+        const latlngPromises = bulkData.map(item =>{
+            const postal = item.postcode + ",Sg"
+
+            return axios.get('https://maps.googleapis.com/maps/api/geocode/json?', {
+                    params: {
+                        key: "AIzaSyDetdZ8-OnHzti6_IUpqY0NMw3ISltLYBo",
+                        address: postal
+                    }
+                })
+        } )
+
+        Promise.all(latlngPromises)
+            .then(responses => {
+                const latlngResults = responses.map(response =>{
+                    return response.data.results[0].geometry.location
+                })
+                
+
+                const bulkList = bulkData.map( (obj,index) => {
+                    const pickupCode = utility.generateOtp()
+                    const latlng = latlngResults[index]
+        
+                    const dataArr = {
+                        sender_id: rawJWT.id,
+                        receiver_name: obj.name,
+                        receiver_block_num: obj.house_number,
+                        receiver_road_name: obj.street_address,
+                        receiver_floor: obj.floor,
+                        receiver_unit_number: obj.unit,
+                        receiver_poscode: obj.postcode,
+                        receiver_country: 'Singapore',
+                        receiver_contact: obj.contact,
+                        receiver_email: obj.email,
+                        receiver_lat: latlng.lat,
+                        receiver_long: latlng.lng,
+                        item_description: obj.item_desc,
+                        item_qty: obj.qty,
+                        special_instructions: obj.special_instructions,
+                        pickup_code: pickupCode,
+                        status: '0',
+                    }
+                    return dataArr
+                })
+                console.log(bulkList)
+
+                // Save data in the database
+                RequestModel.bulkCreate(bulkList, { validate: true })
+                    .then(data => {
+                        res.status(200).send(data)
+                    })
+                    .catch(err => {
+                        res.status(500).send({
+                            message: err.message || "Some error occurred where creating Request Delivery"
+                        })
+                    })
             })
     },
 

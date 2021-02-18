@@ -35,6 +35,7 @@ app.post('/api/v1/user/register', usersController.register)
 
 app.post("/api/v1/newrequest", mainController.newRequestDelivery)
 app.post("/api/v1/getSenderRequests/:id", mainController.getSenderRequests)
+app.post("/api/v1/batchUpdate", mainController.batchDeliveryUpdate)
 
 app.post("/api/v1/otpGenerator", mainController.generateOtp)
 
