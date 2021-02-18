@@ -98,6 +98,7 @@ const controllers = {
         // Save data in the database
         RequestModel.create(requestDelivery)
             .then(data => {
+                utility.sendEmail(formInputs.receiverEmail, `Your OTP is ${pickupCode}`, "OTP")
                 res.status(200).send(data)
             })
             .catch(err => {
@@ -274,27 +275,16 @@ const controllers = {
                     }
 
                     //if job.Id is found in DB then below code will run if not, the above "if" code will run
-                    // save the otp in db on the record request_id = req.body.jobId
-                    response.update({
-                        pickup_code: deliveryCode
-                    }).then(() => {
-                        let dataToSend = {
-                            status: 1,
-                            message: "OTP Generated"
-                        }
-                        //if the OTP is a normal OTP(you don't have to show it on the client end)
-                        if (params.showOTP) {
-                            dataToSend['otp'] = deliveryCode
-                        }
-                        //if we need to see the OTP on driver end, we pass a param showOTP: true
-                        res.send(dataToSend)
-                    })
-                        .catch((err) => {
-                            res.send(({
-                                status: 0,
-                                message: err
-                            }))
-                        })
+                    let dataToSend = {
+                        status: response['pickup_code'] ? 1 : 0,
+                        message: response['pickup_code'] ? "OTP Found" : "OTP Not Found",
+                    }
+                    //if the OTP is a normal OTP(you don't have to show it on the client end)
+                    if (params.showOTP) {
+                        dataToSend['otp'] = response['pickup_code']
+                    }
+                    //if we need to see the OTP on driver end, we pass a param showOTP: true
+                    res.send(dataToSend)
 
 
                 }).catch(err => {
