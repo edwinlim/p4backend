@@ -139,8 +139,8 @@ const controllers = {
 
             response.map(user => {
                 user.Requests.map(request => {
-                    if (request.status == "1") {
-                        console.log("Status 1")
+                    if (request.status == "0") {
+
                         data.push({
                             senderId: request.sender_id,
                             requestId: request.id,
@@ -150,7 +150,7 @@ const controllers = {
                             dropoffCode: request.pickup_code
                         })
                     } else if (request.status == "3") {
-                        console.log("Status 3")
+
                         let dropoffcode = utility.generateOtp()
                         data.push({
                             senderId: request.sender_id,
@@ -214,7 +214,10 @@ const controllers = {
                                     })
                                     .catch(err => { console.log(err) })
 
-                            } else { console.log('request exist') }
+                            } else {
+                                console.log('request exist')
+                                utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+                            }
                         })
                         .catch(err => { console.log(err) })
 
@@ -951,7 +954,7 @@ const controllers = {
     queryDelivery: (req, res) => {
 
         console.log(req.body.searchItem)
-        
+
         RequestModel.findOne(
             {
                 where: Sequelize.or
@@ -961,42 +964,42 @@ const controllers = {
                     )
             })
             .then(result => {
-                
-                   
-                   
-                    switch (result.status) {
-                        case "0":    // Submitted Request (Edwin to change 0->1 after clusterize)
-                            res.send('Request Submitted')
-
-                            break;
-                        case "1":   //Picked up (Admin to change status from 2->3 … arrived at wharehouse))
-                            res.send('Ready for pickup')
-                            break;
-
-                        case "2":   // In Warehouse (Edwin clusterize 3->4)
-                            res.send("Picked Up")
-                            break;
-
-                        case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
-                            res.send("In Wharehouse")
-                            break;
-
-                        case "4":   //On the way (John to change from 5->6 when OTP successful)
-                            res.send("Ready to Deliver")
-                            break;
-
-                        case "5":   //Delivered successfully
-                            res.send("On the Way")
-
-                        case "6":   //Delivered successfully
-                            res.send("Delivered Successfull")
-
-                        default:
 
 
-                    }
 
-                
+                switch (result.status) {
+                    case "0":    // Submitted Request (Edwin to change 0->1 after clusterize)
+                        res.send('Request Submitted')
+
+                        break;
+                    case "1":   //Picked up (Admin to change status from 2->3 … arrived at wharehouse))
+                        res.send('Ready for pickup')
+                        break;
+
+                    case "2":   // In Warehouse (Edwin clusterize 3->4)
+                        res.send("Picked Up")
+                        break;
+
+                    case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
+                        res.send("In Wharehouse")
+                        break;
+
+                    case "4":   //On the way (John to change from 5->6 when OTP successful)
+                        res.send("Ready to Deliver")
+                        break;
+
+                    case "5":   //Delivered successfully
+                        res.send("On the Way")
+
+                    case "6":   //Delivered successfully
+                        res.send("Delivered Successfull")
+
+                    default:
+
+
+                }
+
+
             })
     }
 }
