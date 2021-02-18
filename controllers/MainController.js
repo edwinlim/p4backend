@@ -131,28 +131,28 @@ const controllers = {
         const token = req.headers.auth_token
         const rawJWT = jwt.decode(token)
 
-        const latlngPromises = bulkData.map(item =>{
+        const latlngPromises = bulkData.map(item => {
             const postal = item.postcode + ",Sg"
 
             return axios.get('https://maps.googleapis.com/maps/api/geocode/json?', {
-                    params: {
-                        key: "AIzaSyDetdZ8-OnHzti6_IUpqY0NMw3ISltLYBo",
-                        address: postal
-                    }
-                })
-        } )
+                params: {
+                    key: "AIzaSyDetdZ8-OnHzti6_IUpqY0NMw3ISltLYBo",
+                    address: postal
+                }
+            })
+        })
 
         Promise.all(latlngPromises)
             .then(responses => {
-                const latlngResults = responses.map(response =>{
+                const latlngResults = responses.map(response => {
                     return response.data.results[0].geometry.location
                 })
-                
 
-                const bulkList = bulkData.map( (obj,index) => {
+
+                const bulkList = bulkData.map((obj, index) => {
                     const pickupCode = utility.generateOtp()
                     const latlng = latlngResults[index]
-        
+
                     const dataArr = {
                         sender_id: rawJWT.id,
                         receiver_name: obj.name,
@@ -266,25 +266,37 @@ const controllers = {
                                     {
                                         request_id: data[result.groups[i].clusterInd[j]].requestId,
                                         tour_id: drivers[i].user_id,
+                                        tour_name: `Cluster ${drivers[i].user_id}`,
                                         request_type: data[result.groups[i].clusterInd[j]].requestType,
                                         dropoff_code: data[result.groups[i].clusterInd[j]].dropoffCode,
                                         created_at: Date.now(),
                                         updated_at: Date.now()
                                     }
-
                                 )
                                     .then(res => {
                                         console.log('success')
+
                                         utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
                                     })
                                     .catch(err => { console.log(err) })
 
                             } else {
                                 console.log('request exist')
+                                TourModel.update(
+                                    {
+                                        tour_id: drivers[i].user_id,
+                                        tour_name: `Cluster ${drivers[i].user_id}`},{ where: { id: data[result.groups[i].clusterInd[j]].requestId} })
                                 utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+
                             }
+                            RequestModel.update(
+                                { driver_id: drivers[i].user_id },
+                                { where: { id: data[result.groups[i].clusterInd[j]].requestId } }
+                            )
                         })
                         .catch(err => { console.log(err) })
+
+
 
 
                 }
