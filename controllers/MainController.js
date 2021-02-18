@@ -275,22 +275,28 @@ const controllers = {
                                 )
                                     .then(res => {
                                         console.log('success')
-                                        RequestModel.update(
-                                            { driver_id: drivers[i].user_id },
-                                            { where: { id: data[result.groups[i].clusterInd[j]].requestId } }
-                                        )
+
                                         utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
                                     })
                                     .catch(err => { console.log(err) })
 
                             } else {
                                 console.log('request exist')
+                                TourModel.update(
+                                    {
+                                        tour_id: drivers[i].user_id,
+                                        tour_name: `Cluster ${drivers[i].user_id}`},{ where: { id: data[result.groups[i].clusterInd[j]].requestId} })
                                 utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
+
                             }
+                            RequestModel.update(
+                                { driver_id: drivers[i].user_id },
+                                { where: { id: data[result.groups[i].clusterInd[j]].requestId } }
+                            )
                         })
                         .catch(err => { console.log(err) })
 
-                  
+
 
 
                 }
