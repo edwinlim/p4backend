@@ -98,6 +98,7 @@ const controllers = {
         // Save data in the database
         RequestModel.create(requestDelivery)
             .then(data => {
+                utility.sendEmail(formInputs.receiverEmail, `Your OTP is ${pickupCode}`, "OTP")
                 res.status(200).send(data)
             })
             .catch(err => {
@@ -271,27 +272,16 @@ const controllers = {
                     }
 
                     //if job.Id is found in DB then below code will run if not, the above "if" code will run
-                    // save the otp in db on the record request_id = req.body.jobId
-                    response.update({
-                        pickup_code: deliveryCode
-                    }).then(() => {
-                        let dataToSend = {
-                            status: 1,
-                            message: "OTP Generated"
-                        }
-                        //if the OTP is a normal OTP(you don't have to show it on the client end)
-                        if (params.showOTP) {
-                            dataToSend['otp'] = deliveryCode
-                        }
-                        //if we need to see the OTP on driver end, we pass a param showOTP: true
-                        res.send(dataToSend)
-                    })
-                        .catch((err) => {
-                            res.send(({
-                                status: 0,
-                                message: err
-                            }))
-                        })
+                    let dataToSend = {
+                        status: response['pickup_code'] ? 1 : 0,
+                        message: response['pickup_code'] ? "OTP Found" : "OTP Not Found",
+                    }
+                    //if the OTP is a normal OTP(you don't have to show it on the client end)
+                    if (params.showOTP) {
+                        dataToSend['otp'] = response['pickup_code']
+                    }
+                    //if we need to see the OTP on driver end, we pass a param showOTP: true
+                    res.send(dataToSend)
 
 
                 }).catch(err => {
@@ -951,7 +941,7 @@ const controllers = {
     queryDelivery: (req, res) => {
 
         console.log(req.body.searchItem)
-        
+
         RequestModel.findOne(
             {
                 where: Sequelize.or
@@ -961,42 +951,42 @@ const controllers = {
                     )
             })
             .then(result => {
-                
-                   
-                   
-                    switch (result.status) {
-                        case "0":    // Submitted Request (Edwin to change 0->1 after clusterize)
-                            res.send('Request Submitted')
-
-                            break;
-                        case "1":   //Picked up (Admin to change status from 2->3 … arrived at wharehouse))
-                            res.send('Ready for pickup')
-                            break;
-
-                        case "2":   // In Warehouse (Edwin clusterize 3->4)
-                            res.send("Picked Up")
-                            break;
-
-                        case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
-                            res.send("In Wharehouse")
-                            break;
-
-                        case "4":   //On the way (John to change from 5->6 when OTP successful)
-                            res.send("Ready to Deliver")
-                            break;
-
-                        case "5":   //Delivered successfully
-                            res.send("On the Way")
-
-                        case "6":   //Delivered successfully
-                            res.send("Delivered Successfull")
-
-                        default:
 
 
-                    }
 
-                
+                switch (result.status) {
+                    case "0":    // Submitted Request (Edwin to change 0->1 after clusterize)
+                        res.send('Request Submitted')
+
+                        break;
+                    case "1":   //Picked up (Admin to change status from 2->3 … arrived at wharehouse))
+                        res.send('Ready for pickup')
+                        break;
+
+                    case "2":   // In Warehouse (Edwin clusterize 3->4)
+                        res.send("Picked Up")
+                        break;
+
+                    case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
+                        res.send("In Wharehouse")
+                        break;
+
+                    case "4":   //On the way (John to change from 5->6 when OTP successful)
+                        res.send("Ready to Deliver")
+                        break;
+
+                    case "5":   //Delivered successfully
+                        res.send("On the Way")
+
+                    case "6":   //Delivered successfully
+                        res.send("Delivered Successfull")
+
+                    default:
+
+
+                }
+
+
             })
     }
 }
