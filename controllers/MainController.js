@@ -287,11 +287,6 @@ const controllers = {
                                 console.log('request exist')
                                 utility.upgradeStatus(data[result.groups[i].clusterInd[j]].requestId)
                             }
-                        }).then(()=>{
-                            RequestModel.update(
-                                { driver_id: drivers[i].user_id },
-                                { where: { id: data[result.groups[i].clusterInd[j]].requestId } }
-                            )
                         })
                         .catch(err => { console.log(err) })
 
