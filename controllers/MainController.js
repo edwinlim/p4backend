@@ -419,6 +419,7 @@ const controllers = {
     validateOtp: async (req, res) => {
         //Validations
         let params = req.body
+
         if (!params) {
             res.send(({
                 status: 0,
@@ -445,18 +446,20 @@ const controllers = {
         }
 
         if (params.typeOfCode === 'pickup_code') {
+
             RequestModel.findOne({
                 where:
                     Sequelize.and(
                         { id: params.jobId },
-                        { otp: params.otp }
+                        { pickup_code: params.otp }
                     )
 
             }).then(async response => {
+ 
                 // validation to check whether the job id is valid or not
                 if (!response) {
                     res.send(({
-                        status: 0,
+                        status: 400,
                         message: "OTP Not Valid"
                     }))
                 } else {
@@ -466,13 +469,13 @@ const controllers = {
                     })
                         .catch(err => {
                             res.send({
-                                status: 0,
+                                status: 500,
                                 message: err
                             })
                         })
 
                     res.send(({
-                        status: 1,
+                        status: 200,
                         message: "OTP is Valid"
                     }))
 
