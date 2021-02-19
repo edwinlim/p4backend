@@ -626,6 +626,9 @@ const controllers = {
                         status: 1
                     },
                     {
+                        status: 4
+                    },
+                    {
                         status: 5
                     }
                 )
@@ -713,6 +716,9 @@ const controllers = {
                         Sequelize.or(
                             {
                                 status: 1
+                            },
+                            {
+                                status: 4
                             },
                             {
                                 status: 5
@@ -1067,6 +1073,27 @@ const controllers = {
 
 
             })
+    },
+
+    incrementStatus: (req, res) => {
+        let params = req.body
+        if (!params) {
+            return res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobID) {
+            return res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
+        utility.upgradeStatus(params.jobID)
+        res.send({
+            status: 1,
+            message: "Status Marked as Ready To Deliver"
+        })
     }
 }
 

@@ -57,6 +57,8 @@ app.post("/api/v1/getMapData", mainController.getMapData)
 
 app.post("/api/v1/queryDelivery", mainController.queryDelivery)
 
+app.post("/api/v1/incrementStatus", mainController.incrementStatus)
+
 
 app.listen(port, () => {
     console.log(`Octopush API listening on port: ${port}`)
