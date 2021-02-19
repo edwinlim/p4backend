@@ -6,8 +6,11 @@ const { Sequelize } = require('../models/index')
 const sequelize = require('../models/index')
 const Request = require('../models/request')
 const RequestModel = Request(sequelize.sequelize, sequelize.Sequelize.DataTypes)
+const Tour = require("../models/tour")
+const TourModel = Tour(sequelize.sequelize, sequelize.Sequelize.DataTypes)
 const lodash = require("lodash")
 const sgMail = require('@sendgrid/mail');
+const tour = require('../models/tour')
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 controllers = {
@@ -41,6 +44,8 @@ controllers = {
 
                         case "2":   // In Warehouse (Edwin clusterize 3->4)
                             newStatus = "3"
+                            TourModel.update({ request_type: "Delivery" },
+                                { where: { request_id: requestID } })
                             break;
 
                         case "3":   //Ready to Deliver (John to change 4->5 after pickup from wharehouse
