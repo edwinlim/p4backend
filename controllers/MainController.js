@@ -131,28 +131,28 @@ const controllers = {
         const token = req.headers.auth_token
         const rawJWT = jwt.decode(token)
 
-        const latlngPromises = bulkData.map(item =>{
+        const latlngPromises = bulkData.map(item => {
             const postal = item.postcode + ",Sg"
 
             return axios.get('https://maps.googleapis.com/maps/api/geocode/json?', {
-                    params: {
-                        key: "AIzaSyDetdZ8-OnHzti6_IUpqY0NMw3ISltLYBo",
-                        address: postal
-                    }
-                })
-        } )
+                params: {
+                    key: "AIzaSyDetdZ8-OnHzti6_IUpqY0NMw3ISltLYBo",
+                    address: postal
+                }
+            })
+        })
 
         Promise.all(latlngPromises)
             .then(responses => {
-                const latlngResults = responses.map(response =>{
+                const latlngResults = responses.map(response => {
                     return response.data.results[0].geometry.location
                 })
-                
 
-                const bulkList = bulkData.map( (obj,index) => {
+
+                const bulkList = bulkData.map((obj, index) => {
                     const pickupCode = utility.generateOtp()
                     const latlng = latlngResults[index]
-        
+
                     const dataArr = {
                         sender_id: rawJWT.id,
                         receiver_name: obj.name,
@@ -614,6 +614,9 @@ const controllers = {
                         status: 1
                     },
                     {
+                        status: 4
+                    },
+                    {
                         status: 5
                     }
                 )
@@ -701,6 +704,9 @@ const controllers = {
                         Sequelize.or(
                             {
                                 status: 1
+                            },
+                            {
+                                status: 4
                             },
                             {
                                 status: 5
@@ -1055,6 +1061,27 @@ const controllers = {
 
 
             })
+    },
+
+    incrementStatus: (req, res) => {
+        let params = req.body
+        if (!params) {
+            return res.send(({
+                status: 0,
+                message: "No Params found"
+            }))
+        }
+        if (!params.jobID) {
+            return res.send(({
+                status: 0,
+                message: "No JOB ID found in Params"
+            }))
+        }
+        utility.upgradeStatus(params.jobID)
+        res.send({
+            status: 1,
+            message: "Status Marked as Ready To Deliver"
+        })
     }
 }
 
