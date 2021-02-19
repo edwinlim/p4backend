@@ -120,7 +120,7 @@ const controllers = {
             })
             .catch(error => {
                 return res.status(500).send({
-                    message: error.message || "Some error occurred where geting data"
+                    message: error.message || "Some errors occurred where geting data"
                 })
             })
     },
