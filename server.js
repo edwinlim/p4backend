@@ -23,7 +23,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json())
 
-app.get("/optimize", mainController.optimize)
+app.get("/api/v1/optimize", mainController.optimize)
 
 app.get("/api/v1/getRequest", mainController.getRequests)
 
